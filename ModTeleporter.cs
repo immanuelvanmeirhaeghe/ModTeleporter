@@ -22,14 +22,20 @@ namespace ModTeleporter
             Planecrash_Cave = 4,
             Native_Passage = 5,
             Overturned_Jeep = 6,
-            Waterfall_Oasis = 7,
-            Abandoned_Tribal_Village = 8,
-            West_Native_Camp = 9,
-            Waterhole = 10,
-            Fishingdock = 11,
-            Drugfacility = 12,
-            Bamboo_Camp = 13,
-            Scorpion_Cave = 14
+            Abandoned_Tribal_Village = 7,
+            West_Native_Camp = 8,
+            Puddle = 9,
+            Harbor = 10,
+            Drug_Facility = 11,
+            Bamboo_Camp = 12,
+            Scorpion_Cave = 13,
+            Airport = 14,
+            Jake_His_Camp = 15,
+            Omega_Camp = 16,
+            Main_Village = 17,
+            Island = 18,
+            Pond = 19,
+            Refugee_Island = 20
         }
 
         private static ModTeleporter s_Instance;
@@ -96,11 +102,12 @@ namespace ModTeleporter
                 InitMapLocations();
                 TeleportToNextMapLocation();
             }
-            if (Input.GetKeyDown(KeyCode.Alpha7))
-            {
-                InitData();
-                PrintPlayerInfo();
-            }
+            //if (Input.GetKeyDown(KeyCode.Alpha7))
+            //{
+            //    InitData();
+            //    PrintPlayerInfo();
+            //    PrintDebugSpawnerInfo();
+            //}
         }
 
         private static void InitData()
@@ -135,59 +142,83 @@ namespace ModTeleporter
             }
             if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Bamboo_Bridge))
             {
-                m_MapGpsCoordinates.Add(MapLocation.Bamboo_Bridge, new Vector3(37, 0, 18));
+                m_MapGpsCoordinates.Add(MapLocation.Bamboo_Bridge, new Vector3(831.159f, 138.608f, 1620.014f));
+            }
+            if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Refugee_Island))
+            {
+                m_MapGpsCoordinates.Add(MapLocation.Refugee_Island, new Vector3(899.3753f, 136.208f, 1424.16f));
+            }
+            if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Island))
+            {
+                m_MapGpsCoordinates.Add(MapLocation.Island, new Vector3(898.0696f, 136.465f, 1425.064f));
             }
             if (!m_MapGpsCoordinates.ContainsKey(MapLocation.East_Native_Camp))
             {
-                m_MapGpsCoordinates.Add(MapLocation.East_Native_Camp, new Vector3(37, 0, 19));
+                m_MapGpsCoordinates.Add(MapLocation.East_Native_Camp, new Vector3(802.765f, 129.871f, 1675.741f));
             }
             if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Elevator_Cave))
             {
-                m_MapGpsCoordinates.Add(MapLocation.Elevator_Cave, new Vector3(40, 0, 19));
+                m_MapGpsCoordinates.Add(MapLocation.Elevator_Cave, new Vector3(688.0139f, 113.0132f, 1704.087f));
             }
             if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Planecrash_Cave))
             {
-                m_MapGpsCoordinates.Add(MapLocation.Planecrash_Cave, new Vector3(40, 0, 24));
+                m_MapGpsCoordinates.Add(MapLocation.Planecrash_Cave, new Vector3(695.7698f, 123.5581f, 1488.888f));
             }
             if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Native_Passage))
             {
-                m_MapGpsCoordinates.Add(MapLocation.Native_Passage, new Vector3(42, 0, 22));
+                m_MapGpsCoordinates.Add(MapLocation.Native_Passage, new Vector3(653.4912f, 138.7564f, 1416.553f));
             }
             if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Overturned_Jeep))
             {
-                m_MapGpsCoordinates.Add(MapLocation.Overturned_Jeep, new Vector3(44, 0, 17));
-            }
-            if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Waterfall_Oasis))
-            {
-                m_MapGpsCoordinates.Add(MapLocation.Waterfall_Oasis, new Vector3(45, 0, 32));
+                m_MapGpsCoordinates.Add(MapLocation.Overturned_Jeep, new Vector3(530.194f, 127.8356f, 1753.261f));
             }
             if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Abandoned_Tribal_Village))
             {
-                m_MapGpsCoordinates.Add(MapLocation.Abandoned_Tribal_Village, new Vector3(46, 0, 26));
+                m_MapGpsCoordinates.Add(MapLocation.Abandoned_Tribal_Village, new Vector3(465.1541f, 106.5126f, 1408.053f));
             }
             if (!m_MapGpsCoordinates.ContainsKey(MapLocation.West_Native_Camp))
             {
-                m_MapGpsCoordinates.Add(MapLocation.West_Native_Camp, new Vector3(47, 0, 17));
+                m_MapGpsCoordinates.Add(MapLocation.West_Native_Camp, new Vector3(412.365f, 98.77797f, 1704.949f));
             }
-            if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Waterhole))
+            if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Pond))
             {
-                m_MapGpsCoordinates.Add(MapLocation.Waterhole, new Vector3(50, 0, 24));
+                m_MapGpsCoordinates.Add(MapLocation.Pond, new Vector3(278.0788f, 101.3528f, 1510.454f));
             }
-            if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Fishingdock))
+            if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Puddle))
             {
-                m_MapGpsCoordinates.Add(MapLocation.Fishingdock, new Vector3(51, 0, 19));
+                m_MapGpsCoordinates.Add(MapLocation.Puddle, new Vector3(265.83f, 96.967f, 1500.19f));
             }
-            if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Drugfacility))
+            if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Harbor))
             {
-                m_MapGpsCoordinates.Add(MapLocation.Drugfacility, new Vector3(51, 0, 27));
+                m_MapGpsCoordinates.Add(MapLocation.Harbor, new Vector3(237.4533f, 89.79554f, 1659.221f));
+            }
+            if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Drug_Facility))
+            {
+                m_MapGpsCoordinates.Add(MapLocation.Drug_Facility, new Vector3(290.9244f, 102.471f, 1377.707f));
             }
             if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Bamboo_Camp))
             {
-                m_MapGpsCoordinates.Add(MapLocation.Bamboo_Camp, new Vector3(52, 0, 17));
+                m_MapGpsCoordinates.Add(MapLocation.Bamboo_Camp, new Vector3(976.809f, 155.6489f, 1309.329f));
             }
             if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Scorpion_Cave))
             {
-                m_MapGpsCoordinates.Add(MapLocation.Scorpion_Cave, new Vector3(52, 0, 16));
+                m_MapGpsCoordinates.Add(MapLocation.Scorpion_Cave, new Vector3(180.9195f, 121.599f, 1276.029f));
+            }
+            if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Airport))
+            {
+                m_MapGpsCoordinates.Add(MapLocation.Airport, new Vector3(1166.69f, 179.99f, 1536.7f));
+            }
+            if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Main_Village))
+            {
+                m_MapGpsCoordinates.Add(MapLocation.Main_Village, new Vector3(1066.53f, 93.01f, 1060.56f));
+            }
+            if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Omega_Camp))
+            {
+                m_MapGpsCoordinates.Add(MapLocation.Omega_Camp, new Vector3(1288.869f, 92.616f, 1124.57f));
+            }
+            if (!m_MapGpsCoordinates.ContainsKey(MapLocation.Jake_His_Camp))
+            {
+                m_MapGpsCoordinates.Add(MapLocation.Jake_His_Camp, new Vector3(1198.763f, 98.715f, 1122.541f));
             }
         }
 
@@ -205,17 +236,10 @@ namespace ModTeleporter
                     m_LastMapLocationTeleportedTo = m_NextMapLocationForTeleport;
 
                     Vector3 gpsCoordinates = m_MapGpsCoordinates.GetValueOrDefault(m_NextMapLocationForTeleport);
-                    PrintPositionInfo(gpsCoordinates, $"gps coordinates {m_NextMapLocationForTeleport.ToString()}");
-
-                    Vector3 teleportPosition = m_NextMapLocationForTeleport != MapLocation.Teleport_Start_Location ?
-                                                                                                                            GetPositionByGPSCoordinates(gpsCoordinates.x, gpsCoordinates.z)
-                                                                                                                            : gpsCoordinates;
-                    PrintPositionInfo(teleportPosition, $"teleport to position {m_NextMapLocationForTeleport.ToString()}");
-
-                    mapLocation.transform.position = teleportPosition;
+                    mapLocation.transform.position = gpsCoordinates;
                     player.Teleport(mapLocation, true);
 
-                    ShowHUDBigInfo($"Teleported to {m_NextMapLocationForTeleport.ToString().Replace('_', ' ')} at {gpsCoordinates.x} S {gpsCoordinates.z} W", "ModTeleport Info", HUDInfoLogTextureType.Count.ToString());
+                    ShowHUDBigInfo($"Teleported to {m_NextMapLocationForTeleport.ToString().Replace('_', ' ')}", "ModTeleport Info", HUDInfoLogTextureType.Count.ToString());
                 }
             }
             catch (Exception exc)
@@ -238,7 +262,25 @@ namespace ModTeleporter
             }
         }
 
-        public static string PrintPositionInfo(Vector3 position, string name = "name")
+        public void PrintDebugSpawnerInfo()
+        {
+            try
+            {
+                string info = string.Empty;
+                DebugSpawner[] array = FindObjectsOfType<DebugSpawner>();
+                for (int i = 0; i < array.Length; i++)
+                {
+                    info += PrintPositionInfo(array[i].gameObject.transform.position, array[i].gameObject.name);
+                }
+                ShowHUDBigInfo($"{info}", "ModTeleport Info", HUDInfoLogTextureType.Count.ToString());
+            }
+            catch (Exception exc)
+            {
+                ModAPI.Log.Write($"[{nameof(ModTeleporter)}.{nameof(ModTeleporter)}:{nameof(PrintDebugSpawnerInfo)}] throws exception: {exc.Message}");
+            }
+        }
+
+        public string PrintPositionInfo(Vector3 position, string name = "name")
         {
             try
             {
@@ -254,28 +296,5 @@ namespace ModTeleporter
             }
         }
 
-        public static Vector3 GetPositionByGPSCoordinates(float gps_lat, float gps_long)
-        {
-            Vector3 inversed = Vector3.zero;
-            try
-            {
-                Vector3 position2 = MapTab.Get().m_WorldZeroDummy.position;
-                Vector3 position3 = MapTab.Get().m_WorldOneDummy.position;
-                float num = position3.x - position2.x;
-                float num2 = position3.z - position2.z;
-                float num3 = num / 35f;
-                float num4 = num2 / 27f;
-
-                inversed.x = (gps_lat * num3) - 20;
-                inversed.z = (gps_long * num4) - 14;
-
-                return inversed;
-            }
-            catch (Exception exc)
-            {
-                ModAPI.Log.Write($"[{nameof(ModTeleporter)}.{nameof(ModTeleporter)}:{nameof(GetPositionByGPSCoordinates)}] throws exception: {exc.Message}");
-                return inversed;
-            }
-        }
     }
 }

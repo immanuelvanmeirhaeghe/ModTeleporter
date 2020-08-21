@@ -48,9 +48,9 @@ namespace ModTeleporter
 
         private static Dictionary<int, MapLocation> m_MapLocations = new Dictionary<int, MapLocation>();
         private static Dictionary<MapLocation, Vector3> m_MapGpsCoordinates = new Dictionary<MapLocation, Vector3>();
-        public static MapLocation m_CurrentMapLocation = MapLocation.Teleport_Start_Location;
-        public static MapLocation m_NextMapLocationForTeleport = MapLocation.Teleport_Start_Location;
-        public static MapLocation m_LastMapLocationTeleportedTo = MapLocation.Teleport_Start_Location;
+        private static MapLocation m_CurrentMapLocation = MapLocation.Teleport_Start_Location;
+        private static MapLocation m_NextMapLocation = MapLocation.Teleport_Start_Location;
+        private static MapLocation m_LastMapLocationTeleportedTo = MapLocation.Teleport_Start_Location;
 
         /// <summary>
         /// ModAPI required security check to enable this mod feature for multiplayer.
@@ -96,18 +96,18 @@ namespace ModTeleporter
 
         private void Update()
         {
+            if (m_CurrentMapLocation != m_LastMapLocationTeleportedTo)
+            {
+                ShowHUDBigInfo($"Teleported to {m_CurrentMapLocation.ToString().Replace('_', ' ')}", "ModTeleport Info", HUDInfoLogTextureType.Count.ToString());
+                m_LastMapLocationTeleportedTo = m_CurrentMapLocation;
+            }
+
             if (Input.GetKeyDown(KeyCode.Alpha6))
             {
                 InitData();
                 InitMapLocations();
                 TeleportToNextMapLocation();
             }
-            //if (Input.GetKeyDown(KeyCode.Alpha7))
-            //{
-            //    InitData();
-            //    PrintPlayerInfo();
-            //    PrintDebugSpawnerInfo();
-            //}
         }
 
         private static void InitData()
@@ -228,18 +228,15 @@ namespace ModTeleporter
             {
                 if (IsModActiveForSingleplayer || IsModActiveForMultiplayer)
                 {
-                    m_CurrentMapLocation = m_LastMapLocationTeleportedTo;
                     GameObject mapLocation = new GameObject(nameof(MapLocation));
-                    int m_NextMapLocationKey = (int)m_LastMapLocationTeleportedTo + 1;
+                    int m_NextMapLocationID = (int)m_LastMapLocationTeleportedTo + 1;
+                    m_NextMapLocation = m_MapLocations.GetValueOrDefault(m_NextMapLocationID);
 
-                    m_NextMapLocationForTeleport = m_MapLocations.GetValueOrDefault(m_NextMapLocationKey);
-                    m_LastMapLocationTeleportedTo = m_NextMapLocationForTeleport;
-
-                    Vector3 gpsCoordinates = m_MapGpsCoordinates.GetValueOrDefault(m_NextMapLocationForTeleport);
+                    Vector3 gpsCoordinates = m_MapGpsCoordinates.GetValueOrDefault(m_NextMapLocation);
                     mapLocation.transform.position = gpsCoordinates;
                     player.Teleport(mapLocation, true);
 
-                    ShowHUDBigInfo($"Teleported to {m_NextMapLocationForTeleport.ToString().Replace('_', ' ')}", "ModTeleport Info", HUDInfoLogTextureType.Count.ToString());
+                    m_CurrentMapLocation = m_NextMapLocation;
                 }
             }
             catch (Exception exc)

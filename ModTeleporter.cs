@@ -13,7 +13,7 @@ namespace ModTeleporter
     /// </summary>
     public class ModTeleporter : MonoBehaviour
     {
-        public Rect ConfirmScreen = new Rect(500f, 500f, 450f, 150f);
+        public static Rect ConfirmScreen = new Rect(500f, 500f, 450f, 150f);
 
         private bool showUI = false;
 
@@ -52,15 +52,25 @@ namespace ModTeleporter
 
         private static HUDManager hUDManager;
 
-        private Dictionary<int, MapLocation> MapLocations = new Dictionary<int, MapLocation>();
-        private Dictionary<MapLocation, Vector3> MapGpsCoordinates = new Dictionary<MapLocation, Vector3>();
-        private MapLocation CurrentMapLocation = MapLocation.Teleport_Start_Location;
-        private MapLocation NextMapLocation = MapLocation.Teleport_Start_Location;
-        private MapLocation LastMapLocationTeleportedTo = MapLocation.Teleport_Start_Location;
+        private static Dictionary<int, MapLocation> MapLocations = new Dictionary<int, MapLocation>();
+        private static Dictionary<MapLocation, Vector3> MapGpsCoordinates = new Dictionary<MapLocation, Vector3>();
+        private static MapLocation CurrentMapLocation = MapLocation.Teleport_Start_Location;
+        private static MapLocation NextMapLocation = MapLocation.Teleport_Start_Location;
+        private static MapLocation LastMapLocationTeleportedTo = MapLocation.Teleport_Start_Location;
 
-        public bool IsModActiveForMultiplayer => FindObjectOfType(typeof(ModManager.ModManager)) != null && ModManager.ModManager.AllowModsForMultiplayer;
+        private bool _isActiveForMultiplayer;
+        public bool IsModActiveForMultiplayer
+        {
+            get => _isActiveForMultiplayer;
+            set => _isActiveForMultiplayer = FindObjectOfType(typeof(ModManager.ModManager)) != null && ModManager.ModManager.AllowModsForMultiplayer;
+        }
 
-        public bool IsModActiveForSingleplayer => ReplTools.AmIMaster();
+        private bool _isActiveForSingleplayer;
+        public bool IsModActiveForSingleplayer
+        {
+            get => _isActiveForSingleplayer;
+            set => _isActiveForSingleplayer = ReplTools.AmIMaster();
+        }
 
         public ModTeleporter()
         {
@@ -115,25 +125,19 @@ namespace ModTeleporter
 
         private void Update()
         {
-            if (IsModActiveForSingleplayer || IsModActiveForMultiplayer)
+            if (Input.GetKeyDown(KeyCode.Alpha6))
             {
-                if (Input.GetKeyDown(KeyCode.Alpha6))
+                if (!showUI)
                 {
-                    if (!showUI)
-                    {
-                        InitData();
-                        InitMapLocations();
-                        EnableCursor(true);
-                    }
-                    showUI = !showUI;
-                    if (!showUI)
-                    {
-                        EnableCursor(false);
-                    }
+                    InitData();
+                    InitMapLocations();
+                    EnableCursor(true);
                 }
-            }
-            {
-                ShowHUDBigInfo($"Fast travel only for single player or host. Use ModManager to activate.", $"{ModName} Info", HUDInfoLogTextureType.Count.ToString());
+                showUI = !showUI;
+                if (!showUI)
+                {
+                    EnableCursor(false);
+                }
             }
         }
 
@@ -155,6 +159,7 @@ namespace ModTeleporter
 
         private void InitWindow()
         {
+            CurrentMapLocation = LastMapLocationTeleportedTo;
             int NextMapLocationID = (int)LastMapLocationTeleportedTo + 1;
             NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
 
@@ -317,6 +322,7 @@ namespace ModTeleporter
                 Vector3 gpsCoordinates = MapGpsCoordinates.GetValueOrDefault(NextMapLocation);
                 mapLocation.transform.position = gpsCoordinates;
                 player.Teleport(mapLocation, true);
+                LastMapLocationTeleportedTo = NextMapLocation;
             }
             catch (Exception exc)
             {

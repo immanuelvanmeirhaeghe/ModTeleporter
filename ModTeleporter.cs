@@ -15,7 +15,10 @@ namespace ModTeleporter
     {
         public static Rect ConfirmScreen = new Rect(500f, 500f, 450f, 150f);
 
+        public static Rect MapsScreen = new Rect(750f, 750f, 750f, 150f);
+
         private bool showUI = false;
+        private bool showMapsUI = false;
 
         public enum MapLocation
         {
@@ -32,15 +35,18 @@ namespace ModTeleporter
             Harbor = 10,
             Drug_Facility = 11,
             Bamboo_Camp = 12,
-            Scorpion_Cave = 13,
+            Scorpion_Cartel_Cave = 13,
             Airport = 14,
-            Jake_His_Camp = 15,
+            Jake_and_Mia_Camp = 15,
             Omega_Camp = 16,
-            Main_Village = 17,
-            Island = 18,
-            Pond = 19,
-            Refugee_Island = 20
+            Main_Tribal_Village = 17,
+            Anaconda_Island = 18,
+            Pond = 19
         }
+
+        private static string SelectedMapLocation = string.Empty;
+        private static int SelectedMapLocationIndex = 0;
+        public static string[] GetMapLocations() => Enum.GetNames(typeof(MapLocation));
 
         private static ModTeleporter s_Instance;
 
@@ -133,17 +139,54 @@ namespace ModTeleporter
                     InitMapLocations();
                     EnableCursor(true);
                 }
-                showUI = !showUI;
+                ToggleShowUI(0);
                 if (!showUI)
                 {
                     EnableCursor(false);
                 }
             }
+
+            if (Input.GetKeyDown(KeyCode.Home))
+            {
+                if (!showMapsUI)
+                {
+                    InitData();
+                    InitMapLocations();
+                    EnableCursor(true);
+                }
+                ToggleShowUI(1);
+                if (!showMapsUI)
+                {
+                    EnableCursor(false);
+                }
+            }
+
+            if (Input.GetKeyDown(KeyCode.Print))
+            {
+                PrintPlayerInfo();
+            }
+        }
+
+        private void ToggleShowUI(int level)
+        {
+            switch (level)
+            {
+                case 0:
+                    showUI = !showUI;
+                    break;
+                case 1:
+                    showMapsUI = !showMapsUI;
+                    break;
+                default:
+                    showUI = !showUI;
+                    showMapsUI = !showMapsUI;
+                    break;
+            }
         }
 
         private void OnGUI()
         {
-            if (showUI)
+            if (showUI || showMapsUI)
             {
                 InitData();
                 InitMapLocations();
@@ -160,10 +203,46 @@ namespace ModTeleporter
         private void InitWindow()
         {
             CurrentMapLocation = LastMapLocationTeleportedTo;
-            int NextMapLocationID = (int)LastMapLocationTeleportedTo + 1;
-            NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
 
-            ConfirmScreen = GUILayout.Window(GetHashCode(), ConfirmScreen, AskConfirm, $"{ModName} Info", GUI.skin.window);
+            if (showUI)
+            {
+                ConfirmScreen = GUILayout.Window(GetHashCode(), ConfirmScreen, AskConfirm, $"{ModName} Info", GUI.skin.window);
+            }
+
+            if (showMapsUI)
+            {
+                MapsScreen = GUILayout.Window(GetHashCode(), MapsScreen, ShowMapsScreen, $"{ModName} Info", GUI.skin.window);
+            }
+        }
+
+        private void ShowMapsScreen(int windowID)
+        {
+            using (var verticalScope = new GUILayout.VerticalScope(GUI.skin.box))
+            {
+                if (GUI.Button(new Rect(730f, 0f, 20f, 20f), "X", GUI.skin.button))
+                {
+                    CloseWindow();
+                }
+
+                using (var currentScope = new GUILayout.VerticalScope(GUI.skin.box))
+                {
+                    GUILayout.Label($"Current map location: {CurrentMapLocation.ToString().Replace("_", " ")}", GUI.skin.label);
+                    GUILayout.Label($"Next map location: {NextMapLocation.ToString().Replace("_", " ")}", GUI.skin.label);
+                }
+
+                using (var selectScope = new GUILayout.VerticalScope(GUI.skin.box))
+                {
+                    GUILayout.Label("Select next map location to teleport to. Then click teleport", GUI.skin.label);
+                    SelectedMapLocationIndex = GUILayout.SelectionGrid(SelectedMapLocationIndex, GetMapLocations(), 3, GUI.skin.button);
+
+                    if (GUILayout.Button("Teleport", GUI.skin.button))
+                    {
+                        TeleportToNextMapLocation();
+                        CloseWindow();
+                    }
+                }
+            }
+            GUI.DragWindow(new Rect(0f, 0f, 10000f, 10000f));
         }
 
         private void AskConfirm(int windowID)
@@ -236,13 +315,9 @@ namespace ModTeleporter
             {
                 MapGpsCoordinates.Add(MapLocation.Bamboo_Bridge, new Vector3(831.159f, 138.608f, 1620.014f));
             }
-            if (!MapGpsCoordinates.ContainsKey(MapLocation.Refugee_Island))
+            if (!MapGpsCoordinates.ContainsKey(MapLocation.Anaconda_Island))
             {
-                MapGpsCoordinates.Add(MapLocation.Refugee_Island, new Vector3(899.3753f, 136.208f, 1424.16f));
-            }
-            if (!MapGpsCoordinates.ContainsKey(MapLocation.Island))
-            {
-                MapGpsCoordinates.Add(MapLocation.Island, new Vector3(898.0696f, 136.465f, 1425.064f));
+                MapGpsCoordinates.Add(MapLocation.Anaconda_Island, new Vector3(898.0696f, 136.465f, 1425.064f));
             }
             if (!MapGpsCoordinates.ContainsKey(MapLocation.East_Native_Camp))
             {
@@ -292,25 +367,25 @@ namespace ModTeleporter
             {
                 MapGpsCoordinates.Add(MapLocation.Bamboo_Camp, new Vector3(976.809f, 155.6489f, 1309.329f));
             }
-            if (!MapGpsCoordinates.ContainsKey(MapLocation.Scorpion_Cave))
+            if (!MapGpsCoordinates.ContainsKey(MapLocation.Scorpion_Cartel_Cave))
             {
-                MapGpsCoordinates.Add(MapLocation.Scorpion_Cave, new Vector3(180.9195f, 121.599f, 1276.029f));
+                MapGpsCoordinates.Add(MapLocation.Scorpion_Cartel_Cave, new Vector3(180.9195f, 121.599f, 1276.029f));
             }
             if (!MapGpsCoordinates.ContainsKey(MapLocation.Airport))
             {
                 MapGpsCoordinates.Add(MapLocation.Airport, new Vector3(1166.69f, 179.99f, 1536.7f));
             }
-            if (!MapGpsCoordinates.ContainsKey(MapLocation.Main_Village))
+            if (!MapGpsCoordinates.ContainsKey(MapLocation.Main_Tribal_Village))
             {
-                MapGpsCoordinates.Add(MapLocation.Main_Village, new Vector3(1066.53f, 93.01f, 1060.56f));
+                MapGpsCoordinates.Add(MapLocation.Main_Tribal_Village, new Vector3(1066.53f, 93.01f, 1060.56f));
             }
             if (!MapGpsCoordinates.ContainsKey(MapLocation.Omega_Camp))
             {
                 MapGpsCoordinates.Add(MapLocation.Omega_Camp, new Vector3(1288.869f, 92.616f, 1124.57f));
             }
-            if (!MapGpsCoordinates.ContainsKey(MapLocation.Jake_His_Camp))
+            if (!MapGpsCoordinates.ContainsKey(MapLocation.Jake_and_Mia_Camp))
             {
-                MapGpsCoordinates.Add(MapLocation.Jake_His_Camp, new Vector3(1198.763f, 98.715f, 1122.541f));
+                MapGpsCoordinates.Add(MapLocation.Jake_and_Mia_Camp, new Vector3(1198.763f, 98.715f, 1122.541f));
             }
         }
 
@@ -318,10 +393,26 @@ namespace ModTeleporter
         {
             try
             {
+                int NextMapLocationID = 0;
+
+                if (showUI)
+                {
+                    NextMapLocationID = (int)LastMapLocationTeleportedTo + 1;
+                }
+
+                if (showMapsUI)
+                {
+                    string[] mapLocations = GetMapLocations();
+                    SelectedMapLocation = mapLocations[SelectedMapLocationIndex];
+                    NextMapLocationID = (int)EnumUtils<MapLocation>.GetValue(SelectedMapLocation);
+                }
+
                 GameObject mapLocation = new GameObject(nameof(MapLocation));
+                NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
                 Vector3 gpsCoordinates = MapGpsCoordinates.GetValueOrDefault(NextMapLocation);
                 mapLocation.transform.position = gpsCoordinates;
                 player.Teleport(mapLocation, true);
+
                 LastMapLocationTeleportedTo = NextMapLocation;
             }
             catch (Exception exc)
@@ -366,7 +457,8 @@ namespace ModTeleporter
         {
             try
             {
-                StringBuilder info = new StringBuilder($"\n{name.ToUpper()}");
+                StringBuilder info = new StringBuilder($"");
+                info.AppendLine($"\n{name.ToUpper()}");
                 info.AppendLine($"\nx: {position.x}, y: {position.y} z: {position.z} ");
                 ModAPI.Log.Write(info.ToString());
                 return info.ToString();

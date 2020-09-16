@@ -44,10 +44,6 @@ namespace ModTeleporter
             Pond = 19
         }
 
-        private static string SelectedMapLocation = string.Empty;
-        private static int SelectedMapLocationIndex = 0;
-        public static string[] GetMapLocations() => Enum.GetNames(typeof(MapLocation));
-
         private static ModTeleporter s_Instance;
 
         private static readonly string ModName = nameof(ModTeleporter);
@@ -59,10 +55,23 @@ namespace ModTeleporter
         private static HUDManager hUDManager;
 
         private static Dictionary<int, MapLocation> MapLocations = new Dictionary<int, MapLocation>();
+
         private static Dictionary<MapLocation, Vector3> MapGpsCoordinates = new Dictionary<MapLocation, Vector3>();
+
         private static MapLocation CurrentMapLocation = MapLocation.Teleport_Start_Location;
+
         private static MapLocation NextMapLocation = MapLocation.Teleport_Start_Location;
+
+        private static int NextMapLocationID = (int)NextMapLocation;
+
         private static MapLocation LastMapLocationTeleportedTo = MapLocation.Teleport_Start_Location;
+
+        private static string SelectedMapLocation = string.Empty;
+
+        private static int SelectedMapLocationIndex = 0;
+
+        public static string[] GetMapLocations() => Enum.GetNames(typeof(MapLocation));
+
 
         private bool _isActiveForMultiplayer;
         public bool IsModActiveForMultiplayer
@@ -161,8 +170,9 @@ namespace ModTeleporter
                 }
             }
 
-            if (Input.GetKeyDown(KeyCode.Print))
+            if (Input.GetKeyDown(KeyCode.P))
             {
+                InitData();
                 PrintPlayerInfo();
             }
         }
@@ -206,6 +216,8 @@ namespace ModTeleporter
 
             if (showUI)
             {
+                NextMapLocationID = (int)LastMapLocationTeleportedTo + 1;
+                NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
                 ConfirmScreen = GUILayout.Window(GetHashCode(), ConfirmScreen, AskConfirm, $"{ModName} Info", GUI.skin.window);
             }
 
@@ -226,8 +238,7 @@ namespace ModTeleporter
 
                 using (var currentScope = new GUILayout.VerticalScope(GUI.skin.box))
                 {
-                    GUILayout.Label($"Current map location: {CurrentMapLocation.ToString().Replace("_", " ")}", GUI.skin.label);
-                    GUILayout.Label($"Next map location: {NextMapLocation.ToString().Replace("_", " ")}", GUI.skin.label);
+                    GUILayout.Label($"Last map location: {LastMapLocationTeleportedTo.ToString().Replace("_", " ")}", GUI.skin.label);
                 }
 
                 using (var selectScope = new GUILayout.VerticalScope(GUI.skin.box))
@@ -249,14 +260,14 @@ namespace ModTeleporter
         {
             using (var verticalScope = new GUILayout.VerticalScope(GUI.skin.box))
             {
-                if (GUI.Button(new Rect(430f, 0f, 15f, 15f), "X", GUI.skin.button))
+                if (GUI.Button(new Rect(430f, 0f, 20f, 20f), "X", GUI.skin.button))
                 {
                     CloseWindow();
                 }
 
                 using (var horizontalScope = new GUILayout.HorizontalScope(GUI.skin.box))
                 {
-                    GUILayout.Label($"Fast travel from {CurrentMapLocation.ToString().Replace("_", " ")} to {NextMapLocation.ToString().Replace("_", " ")}?", GUI.skin.label);
+                    GUILayout.Label($"Fast travel from {LastMapLocationTeleportedTo.ToString().Replace("_", " ")} to {NextMapLocation.ToString().Replace("_", " ")}?", GUI.skin.label);
                 }
 
                 using (var horizontalScope = new GUILayout.HorizontalScope(GUI.skin.box))
@@ -278,6 +289,7 @@ namespace ModTeleporter
         private void CloseWindow()
         {
             showUI = false;
+            showMapsUI = false;
             EnableCursor(false);
         }
 
@@ -393,22 +405,15 @@ namespace ModTeleporter
         {
             try
             {
-                int NextMapLocationID = 0;
-
-                if (showUI)
-                {
-                    NextMapLocationID = (int)LastMapLocationTeleportedTo + 1;
-                }
-
                 if (showMapsUI)
                 {
                     string[] mapLocations = GetMapLocations();
                     SelectedMapLocation = mapLocations[SelectedMapLocationIndex];
                     NextMapLocationID = (int)EnumUtils<MapLocation>.GetValue(SelectedMapLocation);
+                    NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
                 }
 
                 GameObject mapLocation = new GameObject(nameof(MapLocation));
-                NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
                 Vector3 gpsCoordinates = MapGpsCoordinates.GetValueOrDefault(NextMapLocation);
                 mapLocation.transform.position = gpsCoordinates;
                 player.Teleport(mapLocation, true);

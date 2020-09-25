@@ -41,7 +41,8 @@ namespace ModTeleporter
             Omega_Camp = 16,
             Main_Tribal_Village = 17,
             Anaconda_Island = 18,
-            Pond = 19
+            Pond = 19,
+			Story_Start_Oasis = 20
         }
 
         private static ModTeleporter s_Instance;
@@ -398,6 +399,10 @@ namespace ModTeleporter
             if (!MapGpsCoordinates.ContainsKey(MapLocation.Jake_and_Mia_Camp))
             {
                 MapGpsCoordinates.Add(MapLocation.Jake_and_Mia_Camp, new Vector3(1198.763f, 98.715f, 1122.541f));
+            }
+			if (!MapGpsCoordinates.ContainsKey(MapLocation.Story_Start_Oasis))
+            {
+                MapGpsCoordinates.Add(MapLocation.Story_Start_Oasis, new Vector3(496.5056f, 99.32371f, 1202.032f));
             }
         }
 

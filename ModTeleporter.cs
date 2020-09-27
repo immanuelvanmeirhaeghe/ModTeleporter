@@ -13,9 +13,9 @@ namespace ModTeleporter
     /// </summary>
     public class ModTeleporter : MonoBehaviour
     {
-        public static Rect ConfirmScreen = new Rect(500f, 500f, 450f, 150f);
+        public static Rect ConfirmScreen = new Rect(850f, 750f, 450f, 150f);
 
-        public static Rect MapsScreen = new Rect(750f, 750f, 750f, 150f);
+        public static Rect MapsScreen = new Rect(150f, 750f, 750f, 150f);
 
         private bool ShowUI = false;
         private bool ShowMapsUI = false;

@@ -17,8 +17,8 @@ namespace ModTeleporter
 
         public static Rect MapsScreen = new Rect(750f, 750f, 750f, 150f);
 
-        private bool showUI = false;
-        private bool showMapsUI = false;
+        private bool ShowUI = false;
+        private bool ShowMapsUI = false;
 
         public enum MapLocation
         {
@@ -71,7 +71,12 @@ namespace ModTeleporter
 
         private static int SelectedMapLocationIndex = 0;
 
-        public static string[] GetMapLocations() => Enum.GetNames(typeof(MapLocation));
+        public static string[] GetMapLocations()
+        {
+            string[] locationNames = Enum.GetNames(typeof(MapLocation));
+            Array.ForEach(locationNames, locationName => locationName.Replace("_", " "));
+            return locationNames;
+        }
 
 
         private bool _isActiveForMultiplayer;
@@ -125,8 +130,6 @@ namespace ModTeleporter
 
         public void ShowHUDBigInfo(string text, string header, string textureName)
         {
-            HUDManager hUDManager = HUDManager.Get();
-
             HUDBigInfo hudBigInfo = (HUDBigInfo)hUDManager.GetHUD(typeof(HUDBigInfo));
             HUDBigInfoData hudBigInfoData = new HUDBigInfoData
             {
@@ -143,14 +146,14 @@ namespace ModTeleporter
         {
             if (Input.GetKeyDown(KeyCode.Alpha6))
             {
-                if (!showUI)
+                if (!ShowUI)
                 {
                     InitData();
                     InitMapLocations();
                     EnableCursor(true);
                 }
                 ToggleShowUI(0);
-                if (!showUI)
+                if (!ShowUI)
                 {
                     EnableCursor(false);
                 }
@@ -158,14 +161,14 @@ namespace ModTeleporter
 
             if (Input.GetKeyDown(KeyCode.Home))
             {
-                if (!showMapsUI)
+                if (!ShowMapsUI)
                 {
                     InitData();
                     InitMapLocations();
                     EnableCursor(true);
                 }
                 ToggleShowUI(1);
-                if (!showMapsUI)
+                if (!ShowMapsUI)
                 {
                     EnableCursor(false);
                 }
@@ -183,21 +186,21 @@ namespace ModTeleporter
             switch (level)
             {
                 case 0:
-                    showUI = !showUI;
+                    ShowUI = !ShowUI;
                     break;
                 case 1:
-                    showMapsUI = !showMapsUI;
+                    ShowMapsUI = !ShowMapsUI;
                     break;
                 default:
-                    showUI = !showUI;
-                    showMapsUI = !showMapsUI;
+                    ShowUI = !ShowUI;
+                    ShowMapsUI = !ShowMapsUI;
                     break;
             }
         }
 
         private void OnGUI()
         {
-            if (showUI || showMapsUI)
+            if (ShowUI || ShowMapsUI)
             {
                 InitData();
                 InitMapLocations();
@@ -215,14 +218,14 @@ namespace ModTeleporter
         {
             CurrentMapLocation = LastMapLocationTeleportedTo;
 
-            if (showUI)
+            if (ShowUI)
             {
                 NextMapLocationID = (int)LastMapLocationTeleportedTo + 1;
                 NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
                 ConfirmScreen = GUILayout.Window(GetHashCode(), ConfirmScreen, AskConfirm, $"{ModName} Info", GUI.skin.window);
             }
 
-            if (showMapsUI)
+            if (ShowMapsUI)
             {
                 MapsScreen = GUILayout.Window(GetHashCode(), MapsScreen, ShowMapsScreen, $"{ModName} Info", GUI.skin.window);
             }
@@ -289,8 +292,8 @@ namespace ModTeleporter
 
         private void CloseWindow()
         {
-            showUI = false;
-            showMapsUI = false;
+            ShowUI = false;
+            ShowMapsUI = false;
             EnableCursor(false);
         }
 
@@ -410,10 +413,10 @@ namespace ModTeleporter
         {
             try
             {
-                if (showMapsUI)
+                if (ShowMapsUI)
                 {
                     string[] mapLocations = GetMapLocations();
-                    SelectedMapLocation = mapLocations[SelectedMapLocationIndex];
+                    SelectedMapLocation = mapLocations[SelectedMapLocationIndex].Replace(" ", "_");
                     NextMapLocationID = (int)EnumUtils<MapLocation>.GetValue(SelectedMapLocation);
                     NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
                 }
@@ -467,8 +470,7 @@ namespace ModTeleporter
         {
             try
             {
-                StringBuilder info = new StringBuilder($"");
-                info.AppendLine($"\n{name.ToUpper()}");
+                StringBuilder info = new StringBuilder($"\n{name.ToUpper()}");
                 info.AppendLine($"\nx: {position.x}, y: {position.y} z: {position.z} ");
                 ModAPI.Log.Write(info.ToString());
                 return info.ToString();

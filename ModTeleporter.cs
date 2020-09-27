@@ -74,24 +74,18 @@ namespace ModTeleporter
         public static string[] GetMapLocations()
         {
             string[] locationNames = Enum.GetNames(typeof(MapLocation));
-            Array.ForEach(locationNames, locationName => locationName.Replace("_", " "));
+
+            for (int i = 0; i < locationNames.Length; i++)
+            {
+                string locationName = locationNames[i];
+                locationNames[i] = locationName.Replace("_", " ");
+            }
+
             return locationNames;
         }
 
-
-        private bool _isActiveForMultiplayer;
-        public bool IsModActiveForMultiplayer
-        {
-            get => _isActiveForMultiplayer;
-            set => _isActiveForMultiplayer = FindObjectOfType(typeof(ModManager.ModManager)) != null && ModManager.ModManager.AllowModsForMultiplayer;
-        }
-
-        private bool _isActiveForSingleplayer;
-        public bool IsModActiveForSingleplayer
-        {
-            get => _isActiveForSingleplayer;
-            set => _isActiveForSingleplayer = ReplTools.AmIMaster();
-        }
+        public bool IsModActiveForMultiplayer => FindObjectOfType(typeof(ModManager.ModManager)) != null && ModManager.ModManager.AllowModsForMultiplayer;
+        public bool IsModActiveForSingleplayer => ReplTools.AmIMaster();
 
         public ModTeleporter()
         {

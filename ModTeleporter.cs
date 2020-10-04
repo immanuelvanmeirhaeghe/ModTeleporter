@@ -13,12 +13,13 @@ namespace ModTeleporter
     /// </summary>
     public class ModTeleporter : MonoBehaviour
     {
-        public static Rect ConfirmScreen = new Rect(850f, 750f, 450f, 150f);
+        public static Rect ConfirmScreen = new Rect(Screen.width / 2f, Screen.height / 2f, 450f, 150f);
 
-        public static Rect MapsScreen = new Rect(150f, 750f, 750f, 150f);
+        public static Rect MapsScreen = new Rect(Screen.width / 4f, Screen.height / 40f, 750f, 150f);
 
         private bool ShowUI = false;
         private bool ShowMapsUI = false;
+        private static readonly string LogPath = $"{Application.dataPath.Replace("GH_Data", "Logs")}/{nameof(ModTeleporter)}.log";
 
         public enum MapLocation
         {
@@ -84,8 +85,26 @@ namespace ModTeleporter
             return locationNames;
         }
 
-        public bool IsModActiveForMultiplayer => FindObjectOfType(typeof(ModManager.ModManager)) != null && ModManager.ModManager.AllowModsForMultiplayer;
+        public bool IsModActiveForMultiplayer { get; private set; }
         public bool IsModActiveForSingleplayer => ReplTools.AmIMaster();
+
+        private static string HUDBigInfoMessage(string message) => $"<color=#{ColorUtility.ToHtmlStringRGBA(Color.red)}>System</color>\n{message}";
+
+        public void Start()
+        {
+            ModManager.ModManager.onPermissionValueChanged += ModManager_onPermissionValueChanged;
+        }
+
+        private void ModManager_onPermissionValueChanged(bool optionValue)
+        {
+            IsModActiveForMultiplayer = optionValue;
+            ShowHUDBigInfo(
+                          (optionValue ?
+                            HUDBigInfoMessage($"<color=#{ColorUtility.ToHtmlStringRGBA(Color.green)}>Permission to use mods for multiplayer was granted!</color>")
+                            : HUDBigInfoMessage($"<color=#{ColorUtility.ToHtmlStringRGBA(Color.yellow)}>Permission to use mods for multiplayer was revoked!</color>")),
+                           $"{ModName} Info",
+                           HUDInfoLogTextureType.Count.ToString());
+        }
 
         public ModTeleporter()
         {
@@ -424,7 +443,7 @@ namespace ModTeleporter
             }
             catch (Exception exc)
             {
-                ModAPI.Log.Write($"[{nameof(ModTeleporter)}.{nameof(ModTeleporter)}:{nameof(TeleportToNextMapLocation)}] throws exception: {exc.Message}");
+                ModAPI.Log.Write($"[{ModName}.{ModName}:{nameof(TeleportToNextMapLocation)}] throws exception: {exc.Message}");
             }
         }
 
@@ -433,12 +452,15 @@ namespace ModTeleporter
             try
             {
                 Vector3 playerPosition = player.GetWorldPosition();
-                string info = PrintPositionInfo(playerPosition, $"player world position");
-                ShowHUDBigInfo($"{info}", $"{ModName} Info", HUDInfoLogTextureType.Count.ToString());
+                string info = PrintPositionInfo(playerPosition, $"PLAYER WORLD POSITION");
+                ShowHUDBigInfo(
+                   HUDBigInfoMessage($"{info}\nlogged to {LogPath}."),
+                    $"{ModName} Info",
+                    HUDInfoLogTextureType.Count.ToString());
             }
             catch (Exception exc)
             {
-                ModAPI.Log.Write($"[{nameof(ModTeleporter)}.{nameof(ModTeleporter)}:{nameof(PrintPlayerInfo)}] throws exception: {exc.Message}");
+                ModAPI.Log.Write($"[{ModName}.{ModName}:{nameof(PrintPlayerInfo)}] throws exception: {exc.Message}");
             }
         }
 
@@ -452,26 +474,29 @@ namespace ModTeleporter
                 {
                     info += PrintPositionInfo(array[i].gameObject.transform.position, array[i].gameObject.name);
                 }
-                ShowHUDBigInfo($"{info}", $"{ModName} Info", HUDInfoLogTextureType.Count.ToString());
+                ShowHUDBigInfo(
+                    HUDBigInfoMessage($"{info}\nlogged to {LogPath}."),
+                     $"{ModName} Info",
+                     HUDInfoLogTextureType.Count.ToString());
             }
             catch (Exception exc)
             {
-                ModAPI.Log.Write($"[{nameof(ModTeleporter)}.{nameof(ModTeleporter)}:{nameof(PrintDebugSpawnerInfo)}] throws exception: {exc.Message}");
+                ModAPI.Log.Write($"[{ModName}.{ModName}:{nameof(PrintDebugSpawnerInfo)}] throws exception: {exc.Message}");
             }
         }
 
-        public string PrintPositionInfo(Vector3 position, string name = "name")
+        public string PrintPositionInfo(Vector3 position, string header = "header")
         {
             try
             {
-                StringBuilder info = new StringBuilder($"\n{name.ToUpper()}");
+                StringBuilder info = new StringBuilder($"\n<color=#{ColorUtility.ToHtmlStringRGBA(Color.green)}>{header.ToUpper()}</color>");
                 info.AppendLine($"\nx: {position.x}, y: {position.y} z: {position.z} ");
                 ModAPI.Log.Write(info.ToString());
                 return info.ToString();
             }
             catch (Exception exc)
             {
-                ModAPI.Log.Write($"[{nameof(ModTeleporter)}.{nameof(ModTeleporter)}:{nameof(PrintPositionInfo)}] throws exception: {exc.Message}");
+                ModAPI.Log.Write($"[{ModName}.{ModName}:{nameof(PrintPositionInfo)}] throws exception: {exc.Message}");
                 return string.Empty;
             }
         }

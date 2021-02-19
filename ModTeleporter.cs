@@ -42,9 +42,9 @@ namespace ModTeleporter
         public bool IsModActiveForSingleplayer => ReplTools.AmIMaster();
 
         public static GameObject MapLocationObject = new GameObject(nameof(MapLocation));
-        public static string CustomX { get; set; } = LocalPlayer.transform.position.x.ToString();
-        public static string CustomY { get; set; } = LocalPlayer.transform.position.y.ToString();
-        public static string CustomZ { get; set; } = LocalPlayer.transform.position.z.ToString();
+        public static string CustomX { get; set; } = string.Empty;
+        public static string CustomY { get; set; } = string.Empty;
+        public static string CustomZ { get; set; } = string.Empty;
 
         public static Vector3 CustomGpsCoordinates = Vector3.zero;
         public static Vector3 GpsCoordinates = Vector3.zero;

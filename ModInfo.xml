@@ -4,7 +4,7 @@
     <EN>ModTeleporter</EN>
   </Name>
   <Description>
-    <EN>ModTeleporter is a mod for Green Hell which teleports the player to key map locations.</EN>
+    <EN>ModTeleporter is a mod for Green Hell that allows a player to teleport to key map locations in sequence or on selection.</EN>
   </Description>
-  <Version>1.0.3.1</Version>
+  <Version>1.0.3.0</Version>
 </Mod>

@@ -1,10 +1,10 @@
 <Mod ID="ModTeleporter">
-  <Compatible>1.8.1</Compatible>
+  <Compatible>2.0.4</Compatible>
   <Name>
     <EN>ModTeleporter</EN>
   </Name>
   <Description>
     <EN>ModTeleporter is a mod for Green Hell which teleports the player to key map locations.</EN>
   </Description>
-  <Version>1.0.2.8</Version>
+  <Version>1.0.3.1</Version>
 </Mod>

@@ -7,12 +7,13 @@ namespace ModTeleporter
 {
     /// <summary>
     /// ModTeleporter is a mod for Green Hell
-    /// that allows a player to teleport to in-game map locations.
+    /// that allows a player to teleport to key map locations in sequence or on selection.
     /// Enable the mod UI by pressing Home.
     /// </summary>
     public class ModTeleporter : MonoBehaviour
     {
         private static ModTeleporter Instance;
+
         private static readonly string LogPath = $"{Application.dataPath.Replace("GH_Data", "Logs")}/{nameof(ModTeleporter)}.log";
         private static readonly string ModName = nameof(ModTeleporter);
         private static readonly float ModScreenTotalWidth = 850f;
@@ -21,8 +22,8 @@ namespace ModTeleporter
         private static readonly float ModScreenMaxWidth = 850f;
         private static readonly float ModScreenMinHeight = 50f;
         private static readonly float ModScreenMaxHeight = 550f;
-        private static float ModScreenStartPositionX { get; set; } = Screen.width - ModScreenMaxWidth / 2f;
-        private static float ModScreenStartPositionY { get; set; } = Screen.height - ModScreenMaxHeight / 2f;
+        private static float ModScreenStartPositionX { get; set; } = Screen.width / 2f;
+        private static float ModScreenStartPositionY { get; set; } = Screen.height / 2f;
         private static bool IsMinimized { get; set; } = false;
         private bool ShowUI = false;
         private bool ShowMapsUI = false;
@@ -41,6 +42,11 @@ namespace ModTeleporter
         public bool IsModActiveForSingleplayer => ReplTools.AmIMaster();
 
         public static GameObject MapLocationObject = new GameObject(nameof(MapLocation));
+        public static string CustomX { get; set; } = LocalPlayer.transform.position.x.ToString();
+        public static string CustomY { get; set; } = LocalPlayer.transform.position.y.ToString();
+        public static string CustomZ { get; set; } = LocalPlayer.transform.position.z.ToString();
+
+        public static Vector3 CustomGpsCoordinates = Vector3.zero;
         public static Vector3 GpsCoordinates = Vector3.zero;
         public static MapLocation CurrentMapLocation = MapLocation.Teleport_Start_Location;
         public static MapLocation NextMapLocation = MapLocation.Teleport_Start_Location;
@@ -57,7 +63,6 @@ namespace ModTeleporter
                 string locationName = locationNames[i];
                 locationNames[i] = locationName.Replace("_", " ");
             }
-
             return locationNames;
         }
 
@@ -185,9 +190,9 @@ namespace ModTeleporter
             {
                 MapGpsCoordinates.Add(MapLocation.Omega_Camp, new Vector3(1288.869f, 92.616f, 1124.57f));
             }
-            if (!MapGpsCoordinates.ContainsKey(MapLocation.Jake_and_Mia_Camp))
+            if (!MapGpsCoordinates.ContainsKey(MapLocation.Tutorial_Camp))
             {
-                MapGpsCoordinates.Add(MapLocation.Jake_and_Mia_Camp, new Vector3(1198.763f, 98.715f, 1122.541f));
+                MapGpsCoordinates.Add(MapLocation.Tutorial_Camp, new Vector3(1198.763f, 98.715f, 1122.541f));
             }
             if (!MapGpsCoordinates.ContainsKey(MapLocation.Story_Start_Oasis))
             {
@@ -288,6 +293,12 @@ namespace ModTeleporter
             {
                 InitData();
                 PrintPlayerInfo();
+            }
+
+            if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.P))
+            {
+                InitData();
+                PrintDebugSpawnerInfo();
             }
         }
 
@@ -393,10 +404,41 @@ namespace ModTeleporter
                 ScreenMenuBox();
                 if (!IsMinimized)
                 {
+                    CustomMapLocationBox();
                     MapLocationsBox();
                 }
             }
             GUI.DragWindow(new Rect(0f, 0f, 10000f, 10000f));
+        }
+
+        private void CustomMapLocationBox()
+        {
+            using (var customScope = new GUILayout.VerticalScope(GUI.skin.box))
+            {
+                GUI.color = Color.cyan;
+                GUILayout.Label($"Custom GPS coordinates to teleport to: {CustomGpsCoordinates}", GUI.skin.label);
+                GUI.color = Color.white;
+                GUILayout.Label($"Set custom GPS coordinates.", GUI.skin.label);
+                using (var coordScope = new GUILayout.HorizontalScope(GUI.skin.box))
+                    {
+                    GUILayout.Label("X: ", GUI.skin.label);
+                    CustomX = GUILayout.TextField(CustomX, GUI.skin.textField);
+                    GUILayout.Label("Y: ", GUI.skin.label);
+                    CustomY = GUILayout.TextField(CustomY, GUI.skin.textField);
+                    GUILayout.Label("Z: ", GUI.skin.label);
+                    CustomZ = GUILayout.TextField(CustomZ, GUI.skin.textField);
+                }
+
+                if (GUILayout.Button("Teleport", GUI.skin.button))
+                    {
+                    float.TryParse(CustomX, out CustomGpsCoordinates.x);
+                    float.TryParse(CustomY, out CustomGpsCoordinates.y);
+                    float.TryParse(CustomZ, out CustomGpsCoordinates.z);
+                    OnClickTeleport(true);
+                    CloseWindow();
+                    }
+
+            }
         }
 
         private void MapLocationsBox()
@@ -413,7 +455,7 @@ namespace ModTeleporter
                     SelectedMapLocationIndex = GUILayout.SelectionGrid(SelectedMapLocationIndex, mapLocationNames, 3, GUI.skin.button);
                     if (GUILayout.Button("Teleport", GUI.skin.button))
                     {
-                        OnClickTeleport();
+                        OnClickTeleport(false);
                         CloseWindow();
                     }
                 }
@@ -443,26 +485,33 @@ namespace ModTeleporter
             GUI.DragWindow(new Rect(0f, 0f, 10000f, 10000f));
         }
 
-        public void OnClickTeleport()
+        public void OnClickTeleport(bool custom = false)
         {
             try
             {
                 if (ShowMapsUI || ShowUI)
                 {
-                    string[] mapLocationNames = GetMapLocationNames();
-                    if (mapLocationNames != null)
+                    if (!custom)
                     {
-                        SelectedMapLocationName = mapLocationNames[SelectedMapLocationIndex].Replace(" ", "_");
-                        if (!string.IsNullOrEmpty(SelectedMapLocationName))
+                        string[] mapLocationNames = GetMapLocationNames();
+                        if (mapLocationNames != null)
                         {
-                            NextMapLocationID = (int)EnumUtils<MapLocation>.GetValue(SelectedMapLocationName);
-                            NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
-                            GpsCoordinates = MapGpsCoordinates.GetValueOrDefault(NextMapLocation);
-                            if (GpsCoordinates != Vector3.zero)
+                            SelectedMapLocationName = mapLocationNames[SelectedMapLocationIndex].Replace(" ", "_");
+                            if (!string.IsNullOrEmpty(SelectedMapLocationName))
                             {
-                                TeleportToLocation();
+                                NextMapLocationID = (int)EnumUtils<MapLocation>.GetValue(SelectedMapLocationName);
+                                NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
+                                GpsCoordinates = MapGpsCoordinates.GetValueOrDefault(NextMapLocation);
                             }
                         }
+                    }
+                    else
+                    {
+                        GpsCoordinates = CustomGpsCoordinates;
+                    }
+                    if (GpsCoordinates != Vector3.zero)
+                    {
+                        TeleportToLocation();
                     }
                 }
             }
@@ -476,10 +525,6 @@ namespace ModTeleporter
         {
             try
             {
-                if (GpsCoordinates == Vector3.zero)
-                {
-                    TeleportToLocation();
-                }
                 MapLocationObject.transform.position = GpsCoordinates;
                 LocalPlayer.Teleport(MapLocationObject, true);
                 LastMapLocationTeleportedTo = NextMapLocation;
@@ -514,7 +559,7 @@ namespace ModTeleporter
                 {
                     info += PrintPositionInfo(array[i].gameObject.transform.position, array[i].gameObject.name);
                 }
-                ShowHUDBigInfo(HUDBigInfoMessage($"{info}\nlogged to {LogPath}.", MessageType.Info, Color.green));
+                ShowHUDBigInfo(HUDBigInfoMessage($"{nameof(DebugSpawner)} info logged to {LogPath}.", MessageType.Info, Color.green));
             }
             catch (Exception exc)
             {
@@ -526,7 +571,7 @@ namespace ModTeleporter
         {
             try
             {
-                StringBuilder info = new StringBuilder($"\n<color=#{ColorUtility.ToHtmlStringRGBA(Color.green)}>{header.ToUpper()}</color>");
+                StringBuilder info = new StringBuilder($"\n{header.ToUpper()}");
                 info.AppendLine($"\nx: {position.x}, y: {position.y} z: {position.z} ");
                 ModAPI.Log.Write(info.ToString());
                 return info.ToString();

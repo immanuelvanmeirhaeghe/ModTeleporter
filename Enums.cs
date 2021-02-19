@@ -17,7 +17,7 @@
         Bamboo_Camp = 12,
         Scorpion_Cartel_Cave = 13,
         Airport = 14,
-        Jake_and_Mia_Camp = 15,
+        Tutorial_Camp = 15,
         Omega_Camp = 16,
         Main_Tribal_Village = 17,
         Anaconda_Island = 18,

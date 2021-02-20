@@ -22,7 +22,8 @@
         Main_Tribal_Village = 17,
         Anaconda_Island = 18,
         Pond = 19,
-        Story_Start_Oasis = 20
+        Story_Start_Oasis = 20,
+        Custom = 21
     }
 
     public enum MessageType

@@ -67,7 +67,7 @@ namespace ModTeleporter
         }
 
         public static string OnlyForSinglePlayerOrHostMessage() => $"Only available for single player or when host. Host can activate using ModManager.";
-        public static string PermissionChangedMessage(string permission) => $"Permission to use mods and cheats in multiplayer was {permission}";
+        public static string PermissionChangedMessage(string permission, string reason) => $"Permission to use mods and cheats in multiplayer was {permission} because {reason}.";
         public static string HUDBigInfoMessage(string message, MessageType messageType, Color? headcolor = null)
             => $"<color=#{ (headcolor != null ? ColorUtility.ToHtmlStringRGBA(headcolor.Value) : ColorUtility.ToHtmlStringRGBA(Color.red))  }>{messageType}</color>\n{message}";
 
@@ -80,11 +80,13 @@ namespace ModTeleporter
 
         private void ModManager_onPermissionValueChanged(bool optionValue)
         {
+            string reason = optionValue ? "the game host allowed usage" : "the game host did not allow usage";
             IsModActiveForMultiplayer = optionValue;
+
             ShowHUDBigInfo(
                           (optionValue ?
-                            HUDBigInfoMessage(PermissionChangedMessage($"granted"), MessageType.Info, Color.green)
-                            : HUDBigInfoMessage(PermissionChangedMessage($"revoked"), MessageType.Info, Color.yellow))
+                            HUDBigInfoMessage(PermissionChangedMessage($"granted", $"{reason}"), MessageType.Info, Color.green)
+                            : HUDBigInfoMessage(PermissionChangedMessage($"revoked", $"{reason}"), MessageType.Info, Color.yellow))
                             );
         }
 
@@ -289,16 +291,19 @@ namespace ModTeleporter
                 }
             }
 
-            if (Input.GetKeyDown(KeyCode.P))
+            if (IsModActiveForSingleplayer || IsModActiveForMultiplayer)
             {
-                InitData();
-                PrintPlayerInfo();
-            }
+                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.P))
+                {
+                    InitData();
+                    PrintPlayerInfo();
+                }
 
-            if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.P))
-            {
-                InitData();
-                PrintDebugSpawnerInfo();
+                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.L))
+                {
+                    InitData();
+                    PrintDebugSpawnerInfo();
+                }
             }
         }
 
@@ -343,7 +348,7 @@ namespace ModTeleporter
             {
                 NextMapLocationID = (int)LastMapLocationTeleportedTo + 1;
                 NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
-                ModConfirmFastTravelDialogWindow = GUILayout.Window(GetHashCode(), ModConfirmFastTravelDialogWindow, InitModConfirmFastTravelDialogWindow, "Fast travel?", GUI.skin.window);
+                ModConfirmFastTravelDialogWindow = GUILayout.Window(GetHashCode(), ModConfirmFastTravelDialogWindow, InitModConfirmFastTravelDialogWindow, " Teleport?", GUI.skin.window);
             }
 
             if (ShowMapsUI)
@@ -352,9 +357,11 @@ namespace ModTeleporter
                                                                                                           GUI.skin.window,
                                                                                                           GUILayout.ExpandWidth(true),
                                                                                                           GUILayout.MinWidth(ModScreenMinWidth),
+                                                                                                          GUILayout.Width(ModScreenTotalWidth),
                                                                                                           GUILayout.MaxWidth(ModScreenMaxWidth),
                                                                                                           GUILayout.ExpandHeight(true),
                                                                                                           GUILayout.MinHeight(ModScreenMinHeight),
+                                                                                                            GUILayout.Height(ModScreenTotalHeight),
                                                                                                           GUILayout.MaxHeight(ModScreenMaxHeight));
             }
         }
@@ -404,6 +411,7 @@ namespace ModTeleporter
                 ScreenMenuBox();
                 if (!IsMinimized)
                 {
+                    ModOptionsBox();
                     CustomMapLocationBox();
                     MapLocationsBox();
                 }
@@ -411,33 +419,101 @@ namespace ModTeleporter
             GUI.DragWindow(new Rect(0f, 0f, 10000f, 10000f));
         }
 
+        private void OnlyForSingleplayerOrWhenHostBox()
+        {
+            using (var infoScope = new GUILayout.HorizontalScope(GUI.skin.box))
+            {
+                GUI.color = Color.yellow;
+                GUILayout.Label(OnlyForSinglePlayerOrHostMessage(), GUI.skin.label);
+                GUI.color = Color.white;
+            }
+        }
+
+        private void ModOptionsBox()
+        {
+            if (IsModActiveForSingleplayer || IsModActiveForMultiplayer)
+            {
+                Color defaultC = GUI.color;
+                using (var optionsScope = new GUILayout.VerticalScope(GUI.skin.box))
+                {
+                    GUILayout.Label($"Options for mod behaviour", GUI.skin.label);
+                    StatusForMultiplayer();
+                    GUILayout.Label($"To teleport to next map location, press [6]", GUI.skin.label);
+                    GUILayout.Label($"To show your current gps position and set these as custom coordinates, press [Left Alt]+[P]", GUI.skin.label);
+                    GUILayout.Label($"To log debug spawners gps positions, press [Left Alt]+[L]", GUI.skin.label);
+                }
+                GUI.color = defaultC;
+            }
+            else
+            {
+                OnlyForSingleplayerOrWhenHostBox();
+            }
+        }
+
+        private void StatusForMultiplayer()
+        {
+            string reason = string.Empty;
+            if (IsModActiveForSingleplayer || IsModActiveForMultiplayer)
+            {
+                GUI.color = Color.green;
+                if (IsModActiveForSingleplayer)
+                {
+                    reason = "you are the game host";
+                }
+                if (IsModActiveForMultiplayer)
+                {
+                    reason = "the game host allowed usage";
+                }
+                GUILayout.Toggle(true, PermissionChangedMessage($"granted", $"{reason}"), GUI.skin.toggle);
+            }
+            else
+            {
+                if (!IsModActiveForSingleplayer)
+                {
+                    reason = "you are not the game host";
+                }
+                if (!IsModActiveForMultiplayer)
+                {
+                    reason = "the game host did not allow usage";
+                }
+                GUI.color = Color.yellow;
+                GUILayout.Toggle(false, PermissionChangedMessage($"revoked", $"{reason}"), GUI.skin.toggle);
+            }
+            GUI.color = Color.white;
+        }
+
         private void CustomMapLocationBox()
         {
             using (var customScope = new GUILayout.VerticalScope(GUI.skin.box))
             {
                 GUI.color = Color.cyan;
-                GUILayout.Label($"Custom GPS coordinates to teleport to: {CustomGpsCoordinates}", GUI.skin.label);
+                GUILayout.Label($"GPS coordinates x: {CustomGpsCoordinates.x} y: {CustomGpsCoordinates.y} z: {CustomGpsCoordinates.z}", GUI.skin.label);
                 GUI.color = Color.white;
-                GUILayout.Label($"Set custom GPS coordinates.", GUI.skin.label);
+                GUILayout.Label($"Set custom GPS coordinates to teleport to. Then click teleport.", GUI.skin.label);
                 using (var coordScope = new GUILayout.HorizontalScope(GUI.skin.box))
-                    {
-                    GUILayout.Label("X: ", GUI.skin.label);
+                {
+                    GUILayout.Label("x: ", GUI.skin.label);
                     CustomX = GUILayout.TextField(CustomX, GUI.skin.textField);
-                    GUILayout.Label("Y: ", GUI.skin.label);
+                    GUILayout.Label("y: ", GUI.skin.label);
                     CustomY = GUILayout.TextField(CustomY, GUI.skin.textField);
-                    GUILayout.Label("Z: ", GUI.skin.label);
+                    GUILayout.Label("z: ", GUI.skin.label);
                     CustomZ = GUILayout.TextField(CustomZ, GUI.skin.textField);
                 }
 
                 if (GUILayout.Button("Teleport", GUI.skin.button))
+                {
+                    if (float.TryParse(CustomX, out CustomGpsCoordinates.x) &&
+                    float.TryParse(CustomY, out CustomGpsCoordinates.y) &&
+                    float.TryParse(CustomZ, out CustomGpsCoordinates.z))
                     {
-                    float.TryParse(CustomX, out CustomGpsCoordinates.x);
-                    float.TryParse(CustomY, out CustomGpsCoordinates.y);
-                    float.TryParse(CustomZ, out CustomGpsCoordinates.z);
-                    OnClickTeleport(true);
-                    CloseWindow();
+                        OnClickTeleport(true);
+                        CloseWindow();
                     }
-
+                    else
+                    {
+                        ShowHUDBigInfo(HUDBigInfoMessage($"Invalid GPS coordinates x: {CustomX} y: {CustomY} z: {CustomZ}", MessageType.Warning, Color.yellow));
+                    }
+                }
             }
         }
 
@@ -467,13 +543,14 @@ namespace ModTeleporter
             using (var dialogScope = new GUILayout.VerticalScope(GUI.skin.box))
             {
                 GUI.color = Color.cyan;
-                GUILayout.Label($"Fast travel from {LastMapLocationTeleportedTo.ToString().Replace("_", " ")} to {NextMapLocation.ToString().Replace("_", " ")}?", GUI.skin.label);
+                GUILayout.Label($"Teleport to {NextMapLocation.ToString().Replace("_", " ")}?", GUI.skin.label);
                 GUI.color = Color.white;
                 using (var horizontalScope = new GUILayout.HorizontalScope(GUI.skin.box))
                 {
                     if (GUILayout.Button("Yes", GUI.skin.button))
                     {
-                        OnClickTeleport();
+                        CustomGpsCoordinates = MapGpsCoordinates.GetValueOrDefault(NextMapLocation);
+                        OnClickTeleport(true);
                         CloseWindow();
                     }
                     if (GUILayout.Button("No", GUI.skin.button))
@@ -503,15 +580,30 @@ namespace ModTeleporter
                                 NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
                                 GpsCoordinates = MapGpsCoordinates.GetValueOrDefault(NextMapLocation);
                             }
+                            if (GpsCoordinates != Vector3.zero)
+                            {
+                                TeleportToLocation(GpsCoordinates);
+                            }
+                            else
+                            {
+                                ShowHUDBigInfo(HUDBigInfoMessage($"Invalid gps coordinates for {SelectedMapLocationName}", MessageType.Error, Color.red));
+                            }
+                        }
+                        else
+                        {
+                            ShowHUDBigInfo(HUDBigInfoMessage($"Map location names not found!", MessageType.Error, Color.red));
                         }
                     }
                     else
                     {
-                        GpsCoordinates = CustomGpsCoordinates;
-                    }
-                    if (GpsCoordinates != Vector3.zero)
-                    {
-                        TeleportToLocation();
+                        if (CustomGpsCoordinates != Vector3.zero)
+                        {
+                            TeleportToLocation(CustomGpsCoordinates);
+                        }
+                        else
+                        {
+                            ShowHUDBigInfo(HUDBigInfoMessage($"Invalid custom gps coordinates x: {CustomX} y: {CustomY} z: {CustomZ}", MessageType.Warning, Color.yellow));
+                        }
                     }
                 }
             }
@@ -521,11 +613,11 @@ namespace ModTeleporter
             }
         }
 
-        public void TeleportToLocation()
+        public void TeleportToLocation(Vector3 gpsCoordinates)
         {
             try
             {
-                MapLocationObject.transform.position = GpsCoordinates;
+                MapLocationObject.transform.position = gpsCoordinates;
                 LocalPlayer.Teleport(MapLocationObject, true);
                 LastMapLocationTeleportedTo = NextMapLocation;
             }
@@ -540,8 +632,10 @@ namespace ModTeleporter
             try
             {
                 Vector3 playerPosition = LocalPlayer.GetWorldPosition();
-                string info = PrintPositionInfo(playerPosition, $"PLAYER WORLD POSITION");
-                ShowHUDBigInfo(HUDBigInfoMessage($"{info}\nlogged to {LogPath}.", MessageType.Info, Color.green));
+                CustomX = playerPosition.x.ToString();
+                CustomY = playerPosition.y.ToString();
+                CustomZ = playerPosition.z.ToString();
+                ShowHUDBigInfo(HUDBigInfoMessage($"Player gps coordinates\nx: {playerPosition.x}, y: {playerPosition.y} z: {playerPosition.z} ", MessageType.Info, Color.green));
             }
             catch (Exception exc)
             {
@@ -553,11 +647,10 @@ namespace ModTeleporter
         {
             try
             {
-                string info = string.Empty;
                 DebugSpawner[] array = FindObjectsOfType<DebugSpawner>();
                 for (int i = 0; i < array.Length; i++)
                 {
-                    info += PrintPositionInfo(array[i].gameObject.transform.position, array[i].gameObject.name);
+                    PrintPositionInfo(array[i].gameObject.transform.position, array[i].gameObject.name);
                 }
                 ShowHUDBigInfo(HUDBigInfoMessage($"{nameof(DebugSpawner)} info logged to {LogPath}.", MessageType.Info, Color.green));
             }
@@ -567,19 +660,16 @@ namespace ModTeleporter
             }
         }
 
-        public string PrintPositionInfo(Vector3 position, string header = "header")
+        public void PrintPositionInfo(Vector3 position, string mapLocation = "Teleport_Start_Location")
         {
             try
             {
-                StringBuilder info = new StringBuilder($"\n{header.ToUpper()}");
-                info.AppendLine($"\nx: {position.x}, y: {position.y} z: {position.z} ");
+                string info =$"\nMapGpsCoordinates.Add(MapLocation.{mapLocation},  new Vector3({position.x}, {position.y}, {position.z}));";
                 ModAPI.Log.Write(info.ToString());
-                return info.ToString();
             }
             catch (Exception exc)
             {
                 HandleException(exc, nameof(PrintPositionInfo));
-                return string.Empty;
             }
         }
     }

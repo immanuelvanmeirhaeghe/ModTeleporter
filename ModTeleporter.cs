@@ -267,7 +267,7 @@ namespace ModTeleporter
                 }
             }
 
-            if (Input.GetKeyDown(KeyCode.Home))
+            if (Input.GetKeyDown(ModBindingKeyId))
             {
                 if (!ShowMapsUI)
                 {

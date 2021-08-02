@@ -1,6 +1,6 @@
 <Mod ID="ModTeleporter">
   <Compatible>2.1.3</Compatible>
-  <Button Standard="LeftCtrl+T" ID="ModBindingKeyId">
+  <Button Standard="NumPad7" ID="ModBindingKeyId">
     <Name>
       <EN>ModBindingKeyId</EN>
     </Name>

@@ -519,6 +519,7 @@ namespace ModTeleporter
         private static readonly string RuntimeConfigurationFile = Path.Combine(Application.dataPath.Replace("GH_Data", "Mods"), "RuntimeConfiguration.xml");
         private static KeyCode ModBindingKeyId { get; set; } = KeyCode.Alpha7;
         public bool ShowMap { get; private set; }
+        public Vector2 MapLocationsScrollViewPosition { get; private set; }
 
         public void Start()
         {
@@ -562,7 +563,7 @@ namespace ModTeleporter
                 }
 
                 configuredKeyCode = !string.IsNullOrEmpty(configuredKeybinding)
-                                                            ? (KeyCode)Enum.Parse(typeof(KeyCode), configuredKeybinding)
+                                                            ? (KeyCode)Enum.Parse(typeof(KeyCode), configuredKeybinding.Replace("NumPad", "Alpha"))
                                                             : ModBindingKeyId;
                 //ModAPI.Log.Write($"Configured key code: { configuredKeyCode }");
                 return configuredKeyCode;
@@ -939,6 +940,7 @@ namespace ModTeleporter
 
         private void MapLocationsBox()
         {
+            MapLocationsScrollViewPosition = GUILayout.BeginScrollView(MapLocationsScrollViewPosition, GUI.skin.scrollView, GUILayout.MinHeight(300f));
             using (var selectScope = new GUILayout.VerticalScope(GUI.skin.box))
             {
                 string[] mapLocationNames = GetMapLocationNames();
@@ -956,6 +958,7 @@ namespace ModTeleporter
                     }
                 }
             }
+            GUILayout.EndScrollView();
         }
 
         private void InitModConfirmFastTravelDialogWindow(int windowID)

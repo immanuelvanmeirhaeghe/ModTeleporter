@@ -518,6 +518,7 @@ namespace ModTeleporter
 
         private static readonly string RuntimeConfigurationFile = Path.Combine(Application.dataPath.Replace("GH_Data", "Mods"), "RuntimeConfiguration.xml");
         private static KeyCode ModBindingKeyId { get; set; } = KeyCode.Alpha7;
+        public bool ShowMap { get; private set; }
 
         public void Start()
         {
@@ -661,8 +662,18 @@ namespace ModTeleporter
             {
                 if ( Input.GetKeyDown(KeyCode.M))
                 {
-                    InitData();
-                    DrawMapLocations();
+                    if (!ShowMap)
+                    {
+                        InitData();
+                        InitMapLocations();
+                        DrawMapLocations();
+                        EnableCursor(true);
+                    }
+                    ToggleShowUI(2);
+                    if (!ShowMap)
+                    {
+                        EnableCursor(false);
+                    }
                 }
 
                 if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.P))
@@ -704,7 +715,6 @@ namespace ModTeleporter
                     (float gps_lat, float gps_long) gPSCoordinates = ConvertToGpsCoordinates(mapLocationpGpsCoordinates.Value);
                     GUI.DrawTexture(new Rect(gPSCoordinates.gps_lat - MapLocationIconSize / 2f, gPSCoordinates.gps_long - MapLocationIconSize / 2f, MapLocationIconSize, MapLocationIconSize), MapLocationTexture);
                 }
-
             }
             catch (Exception exc)
             {
@@ -722,9 +732,13 @@ namespace ModTeleporter
                 case 1:
                     ShowMapsUI = !ShowMapsUI;
                     break;
+                case 2:
+                    ShowMap = !ShowMap;
+                    break;
                 default:
                     ShowUI = !ShowUI;
                     ShowMapsUI = !ShowMapsUI;
+                    ShowMap = !ShowMap;
                     break;
             }
         }

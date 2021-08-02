@@ -666,7 +666,6 @@ namespace ModTeleporter
                     {
                         InitData();
                         InitMapLocations();
-                        DrawMapLocations();
                         EnableCursor(true);
                     }
                     ToggleShowUI(2);
@@ -713,7 +712,7 @@ namespace ModTeleporter
                 foreach (var mapLocationpGpsCoordinates in MapGpsCoordinates)
                 {
                     (float gps_lat, float gps_long) gPSCoordinates = ConvertToGpsCoordinates(mapLocationpGpsCoordinates.Value);
-                    GUI.DrawTexture(new Rect(gPSCoordinates.gps_lat - MapLocationIconSize / 2f, gPSCoordinates.gps_long - MapLocationIconSize / 2f, MapLocationIconSize, MapLocationIconSize), MapLocationTexture);
+                    GUI.DrawTexture(new Rect(gPSCoordinates.gps_lat - MapLocationIconSize / 2f, gPSCoordinates.gps_long - MapLocationIconSize / 2f, MapLocationIconSize, MapLocationIconSize), MapLocationTexture,ScaleMode.ScaleAndCrop, true);
                 }
             }
             catch (Exception exc)
@@ -745,6 +744,12 @@ namespace ModTeleporter
 
         private void OnGUI()
         {
+            if (ShowMap)
+            {
+                InitData();
+                InitMapLocations();
+                DrawMapLocations();
+            }
             if (ShowUI || ShowMapsUI)
             {
                 InitData();

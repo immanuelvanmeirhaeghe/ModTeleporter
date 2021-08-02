@@ -27,8 +27,14 @@ namespace ModTeleporter
         private static readonly float ModScreenMinHeight = 50f;
         private static readonly float ModScreenMaxHeight = 550f;
 
-        private static readonly float MapLocationIconSize = 25f;
-        private string MapLocationTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/marker.png";
+        private static readonly float MapZoom = 1f;
+        private static readonly string LocalMapTextureURL = "https://modapi.survivetheforest.net/uploads/objects/9/GHMap1_HD_Icons.png";
+        private Texture2D LocalMapTexture;
+        private Vector2 MapGridCount = new Vector2(34f, 25f);
+        private Vector2 MapGridOffset = new Vector2(22f, 13f);
+        private Vector2 MapOffset = new Vector2(4f, 18f);
+        private static readonly float MapLocationIconSize = 50f;
+        private static readonly string MapLocationTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/marker.png";
         private Texture2D MapLocationTexture;
 
         private static float ModScreenStartPositionX { get; set; } = Screen.width / 2f;
@@ -525,7 +531,10 @@ namespace ModTeleporter
         {
             ModManager.ModManager.onPermissionValueChanged += ModManager_onPermissionValueChanged;
             ModBindingKeyId = GetConfigurableKey(nameof(ModBindingKeyId));
-
+            StartCoroutine(LoadTexture(delegate (Texture2D t)
+            {
+                LocalMapTexture = t;
+            }, LocalMapTextureURL));
             StartCoroutine(LoadTexture(delegate (Texture2D t)
             {
                 MapLocationTexture = t;
@@ -675,6 +684,14 @@ namespace ModTeleporter
                         EnableCursor(false);
                     }
                 }
+                if (Input.GetMouseButton(0))
+                {
+                    Vector2 vector = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+                    _position -= vector * 20f;
+                    _position.x = Mathf.Clamp(_position.x, -LocalMapTexture.width, Screen.width);
+                    _position.y = Mathf.Clamp(_position.y, -LocalMapTexture.height, Screen.height);
+                }
+                MapZoom = Mathf.Clamp(MapZoom + Input.mouseScrollDelta.y / 20f, 1f, 3f);
 
                 if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.P))
                 {
@@ -689,6 +706,9 @@ namespace ModTeleporter
                 }
             }
         }
+
+        private Vector2 _position = Vector2.zero;
+
 
         private IEnumerator LoadTexture(Action<Texture2D> action, string url)
         {
@@ -713,7 +733,16 @@ namespace ModTeleporter
                 foreach (var mapLocationpGpsCoordinates in MapGpsCoordinates)
                 {
                     (float gps_lat, float gps_long) gPSCoordinates = ConvertToGpsCoordinates(mapLocationpGpsCoordinates.Value);
-                    GUI.DrawTexture(new Rect(gPSCoordinates.gps_lat - MapLocationIconSize / 2f, gPSCoordinates.gps_long - MapLocationIconSize / 2f, MapLocationIconSize, MapLocationIconSize), MapLocationTexture,ScaleMode.ScaleAndCrop, true);
+                    float item = gPSCoordinates.gps_lat;
+                    float item2 = gPSCoordinates.gps_long;
+                    float num = _position.x + (float)LocalMapTexture.width * MapZoom;
+                    float y = _position.y;
+                    float num2 = ((float)LocalMapTexture.width - MapOffset.x) / MapGridCount.x * MapZoom;
+                    float num3 = ((float)LocalMapTexture.height - MapOffset.y) / MapGridCount.y * MapZoom;
+                    float num4 = num - (item - MapGridOffset.x) * num2;
+                    float num5 = y + (item2 - MapGridOffset.y) * num3;
+
+                    GUI.DrawTexture(new Rect(num4 - MapLocationIconSize / 2f, num5 - MapLocationIconSize / 2f, MapLocationIconSize, MapLocationIconSize), MapLocationTexture);
                 }
             }
             catch (Exception exc)
@@ -951,14 +980,14 @@ namespace ModTeleporter
                     GUI.color = Color.white;
                     GUILayout.Label("Select next map location to teleport to. Then click teleport", GUI.skin.label);
                     SelectedMapLocationIndex = GUILayout.SelectionGrid(SelectedMapLocationIndex, mapLocationNames, 3, GUI.skin.button);
-                    if (GUILayout.Button("Teleport", GUI.skin.button))
-                    {
-                        OnClickTeleport();
-                        CloseWindow();
-                    }
                 }
             }
             GUILayout.EndScrollView();
+            if (GUILayout.Button("Teleport", GUI.skin.button))
+            {
+                OnClickTeleport();
+                CloseWindow();
+            }
         }
 
         private void InitModConfirmFastTravelDialogWindow(int windowID)

@@ -12,7 +12,7 @@
     <EN>ModTeleporter</EN>
   </Name>
   <Description>
-    <EN>ModTeleporter is a mod for Green Hell that allows a player to teleport to custom-bind or key map locations in sequence or on selection. Pess HOME (default) or the key configurable in ModAPI to open the mod screen.</EN>
+    <EN>ModTeleporter is a mod for Green Hell that allows a player to teleport to custom-bind or key map locations in sequence or on selection. Pess Alpha7 (default) or the key configurable in ModAPI to open the mod screen.</EN>
   </Description>
   <Version>1.0.3.2</Version>
 </Mod>

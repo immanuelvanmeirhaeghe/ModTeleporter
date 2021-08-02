@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Xml;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 
 namespace ModTeleporter
@@ -24,6 +26,11 @@ namespace ModTeleporter
         private static readonly float ModScreenMaxWidth = 850f;
         private static readonly float ModScreenMinHeight = 50f;
         private static readonly float ModScreenMaxHeight = 550f;
+
+        private static readonly float MapLocationIconSize = 25f;
+        private string MapLocationTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/marker.png";
+        private Texture2D MapLocationTexture;
+
         private static float ModScreenStartPositionX { get; set; } = Screen.width / 2f;
         private static float ModScreenStartPositionY { get; set; } = Screen.height / 2f;
         private static bool IsMinimized { get; set; } = false;
@@ -516,6 +523,11 @@ namespace ModTeleporter
         {
             ModManager.ModManager.onPermissionValueChanged += ModManager_onPermissionValueChanged;
             ModBindingKeyId = GetConfigurableKey(nameof(ModBindingKeyId));
+
+            StartCoroutine(LoadTexture(delegate (Texture2D t)
+            {
+                MapLocationTexture = t;
+            }, MapLocationTextureUrl));
         }
 
         private KeyCode GetConfigurableKey(string keybindingId)
@@ -647,6 +659,12 @@ namespace ModTeleporter
 
             if (IsModActiveForSingleplayer || IsModActiveForMultiplayer)
             {
+                if ( Input.GetKeyDown(KeyCode.M))
+                {
+                    InitData();
+                    DrawMapLocations();
+                }
+
                 if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.P))
                 {
                     InitData();
@@ -658,6 +676,39 @@ namespace ModTeleporter
                     InitData();
                     PrintDebugSpawnerInfo();
                 }
+            }
+        }
+
+        private IEnumerator LoadTexture(Action<Texture2D> action, string url)
+        {
+            using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url))
+            {
+                yield return uwr.SendWebRequest();
+                if (uwr.isNetworkError || uwr.isHttpError)
+                {
+                    ModAPI.Log.Write(uwr.error);
+                }
+                else
+                {
+                    action(DownloadHandlerTexture.GetContent(uwr));
+                }
+            }
+        }
+
+        private void DrawMapLocations()
+        {
+            try
+            {
+                foreach (var mapLocationpGpsCoordinates in MapGpsCoordinates)
+                {
+                    (float gps_lat, float gps_long) gPSCoordinates = ConvertToGpsCoordinates(mapLocationpGpsCoordinates.Value);
+                    GUI.DrawTexture(new Rect(gPSCoordinates.gps_lat - MapLocationIconSize / 2f, gPSCoordinates.gps_long - MapLocationIconSize / 2f, MapLocationIconSize, MapLocationIconSize), MapLocationTexture);
+                }
+
+            }
+            catch (Exception exc)
+            {
+                HandleException(exc, nameof(DrawMapLocations));
             }
         }
 
@@ -961,6 +1012,20 @@ namespace ModTeleporter
             }
         }
 
+        private (float gps_lat, float gps_long) ConvertToGpsCoordinates(Vector3 position)
+        {
+            Vector3 position2 = MapTab.Get().m_WorldZeroDummy.position;
+            Vector3 position3 = MapTab.Get().m_WorldOneDummy.position;
+            float num = position3.x - position2.x;
+            float num2 = position3.z - position2.z;
+            float num3 = num / 35f;
+            float num4 = num2 / 27f;
+            Vector3 vector = MapTab.Get().m_WorldZeroDummy.InverseTransformPoint(position);
+            float item = vector.x / num3 + 20f;
+            float item2 = vector.z / num4 + 14f;
+            return (item, item2);
+        }
+
         public void TeleportToLocation(Vector3 gpsCoordinates)
         {
             try
@@ -1015,6 +1080,7 @@ namespace ModTeleporter
             try
             {
                 string info =$"\nMapGpsCoordinates[MapLocation.{mapLocation}] = new Vector3({position.x}f, {position.y}f, {position.z}f);";
+                info += $"\t[W,S] = [{ConvertToGpsCoordinates(position)}]";
                 return info;
             }
             catch (Exception exc)
@@ -1023,5 +1089,7 @@ namespace ModTeleporter
                 return string.Empty;
             }
         }
+
+
     }
 }

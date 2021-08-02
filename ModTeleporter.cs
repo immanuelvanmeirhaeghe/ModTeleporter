@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
+using System.Xml;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace ModTeleporter
 {
     /// <summary>
-    /// ModTeleporter is a mod for Green Hell
-    /// that allows a player to teleport to key map locations in sequence or on selection.
-    /// Enable the mod UI by pressing Home.
+    /// ModTeleporter is a mod for Green Hell that allows a player to teleport to custom-bind or key map locations in sequence or on selection.
+    /// Pess 7 (default) or the key configurable in ModAPI to open the mod screen.
     /// </summary>
     public class ModTeleporter : MonoBehaviour
     {
@@ -144,9 +146,56 @@ namespace ModTeleporter
             MapGpsCoordinates[MapLocation.Custom] = CustomGpsCoordinates;
         }
 
+        private static readonly string RuntimeConfigurationFile = Path.Combine(Application.dataPath.Replace("GH_Data", "Mods"), "RuntimeConfiguration.xml");
+        private static KeyCode ModBindingKeyId { get; set; } = KeyCode.Alpha7;
+
         public void Start()
         {
             ModManager.ModManager.onPermissionValueChanged += ModManager_onPermissionValueChanged;
+            ModBindingKeyId = GetConfigurableKey(nameof(ModBindingKeyId));
+        }
+
+        private KeyCode GetConfigurableKey(string keybindingId)
+        {
+            KeyCode configuredKeyCode = default;
+            string configuredKeybinding = string.Empty;
+
+            try
+            {
+                //ModAPI.Log.Write($"Searching XML runtime configuration file {RuntimeConfigurationFile}...");
+                if (File.Exists(RuntimeConfigurationFile))
+                {
+                    using (var xmlReader = XmlReader.Create(new StreamReader(RuntimeConfigurationFile)))
+                    {
+                        //ModAPI.Log.Write($"Reading XML runtime configuration file...");
+                        while (xmlReader.Read())
+                        {
+                            //ModAPI.Log.Write($"Searching configuration for Button with ID = {keybindingId}...");
+                            if (xmlReader.ReadToFollowing(nameof(Button)))
+                            {
+                                if (xmlReader["ID"] == keybindingId)
+                                {
+                                    //ModAPI.Log.Write($"Found configuration for Button with ID = {keybindingId}!");
+                                    configuredKeybinding = xmlReader.ReadElementContentAsString();
+                                    //ModAPI.Log.Write($"Configured keybinding = {configuredKeybinding}.");
+                                }
+                            }
+                        }
+                    }
+                    //ModAPI.Log.Write($"XML runtime configuration\n{File.ReadAllText(RuntimeConfigurationFile)}\n");
+                }
+
+                configuredKeyCode = !string.IsNullOrEmpty(configuredKeybinding)
+                                                            ? (KeyCode)Enum.Parse(typeof(KeyCode), configuredKeybinding)
+                                                            : ModBindingKeyId;
+                //ModAPI.Log.Write($"Configured key code: { configuredKeyCode }");
+                return configuredKeyCode;
+            }
+            catch (Exception exc)
+            {
+                HandleException(exc, nameof(GetConfigurableKey));
+                return configuredKeyCode;
+            }
         }
 
         public ModTeleporter()

@@ -28,15 +28,15 @@ namespace ModTeleporter
         private static readonly float ModScreenMaxHeight = 550f;
 
         private static  float LocalMapZoom = 1f;
-        private static readonly string LocalMapTextureURL = "https://modapi.survivetheforest.net/uploads/objects/9/GHMap1_HD_Icons.png";
+        private static readonly string LocalMapTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/GHMap1_HD_Icons.png";
         private Texture2D LocalMapTexture;
         private Vector2 LocalMapPlayerPosition = Vector2.zero;
         private Vector2 MapGridCount = new Vector2(34f, 25f);
         private Vector2 MapGridOffset = new Vector2(22f, 13f);
         private Vector2 MapOffset = new Vector2(4f, 18f);
-        private static readonly float MapLocationIconSize = 50f;
-        private static readonly string LocalMapLocationTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/marker.png";
-        private Texture2D MapLocationTexture;
+        private static readonly float LocalMapLocationMarkerIconSize = 50f;
+        private static readonly string LocalMapLocationMarkerTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/marker.png";
+        private Texture2D LocalMapLocationMarkerTexture;
         private Color DefaultGuiColor = GUI.color;
 
         private static float ModScreenStartPositionX { get; set; } = Screen.width / 2f;
@@ -577,14 +577,14 @@ namespace ModTeleporter
         {
             ModManager.ModManager.onPermissionValueChanged += ModManager_onPermissionValueChanged;
             ModBindingKeyId = GetConfigurableKey(nameof(ModBindingKeyId));
-            StartCoroutine(LoadTexture(delegate (Texture2D t)
+            StartCoroutine(LoadTexture(delegate (Texture2D mapt)
             {
-                LocalMapTexture = t;
-            }, LocalMapTextureURL));
-            StartCoroutine(LoadTexture(delegate (Texture2D t)
+                LocalMapTexture = mapt;
+            }, LocalMapTextureUrl));
+            StartCoroutine(LoadTexture(delegate (Texture2D markert)
             {
-                MapLocationTexture = t;
-            }, LocalMapLocationTextureUrl));
+                LocalMapLocationMarkerTexture = markert;
+            }, LocalMapLocationMarkerTextureUrl));
         }
 
         private IEnumerator LoadTexture(Action<Texture2D> action, string url)
@@ -605,11 +605,20 @@ namespace ModTeleporter
 
         private void DrawMapLocations()
         {
+            if (ShowMapUI && Input.GetMouseButton(0))
+            {
+                Vector2 vector = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+                LocalMapPlayerPosition -= vector * 20f;
+                LocalMapPlayerPosition.x = Mathf.Clamp(LocalMapPlayerPosition.x, -LocalMapTexture.width, Screen.width);
+                LocalMapPlayerPosition.y = Mathf.Clamp(LocalMapPlayerPosition.y, -LocalMapTexture.height, Screen.height);
+            }
+            LocalMapZoom = Mathf.Clamp(LocalMapZoom + Input.mouseScrollDelta.y / 20f, 1f, 3f);
+
             try
             {
-                foreach (var mapLocationpGpsCoordinates in MapGpsCoordinates)
+                foreach (var mapLocationsGpsCoordinates in MapGpsCoordinates)
                 {
-                    (float gps_lat, float gps_long) mapGpsCoordinates = ConvertToMapGpsCoordinates(mapLocationpGpsCoordinates.Value);
+                    (float gps_lat, float gps_long) mapGpsCoordinates = ConvertToMapGpsCoordinates(mapLocationsGpsCoordinates.Value);
                     float item = mapGpsCoordinates.gps_lat;
                     float item2 = mapGpsCoordinates.gps_long;
                     float num = LocalMapPlayerPosition.x + (float)LocalMapTexture.width * LocalMapZoom;
@@ -619,7 +628,7 @@ namespace ModTeleporter
                     float num4 = num - (item - MapGridOffset.x) * num2;
                     float num5 = y + (item2 - MapGridOffset.y) * num3;
 
-                    GUI.DrawTexture(new Rect(num4 - MapLocationIconSize / 2f, num5 - MapLocationIconSize / 2f, MapLocationIconSize / 2f, MapLocationIconSize / 2f), MapLocationTexture);
+                    GUI.DrawTexture(new Rect(num4 - LocalMapLocationMarkerIconSize / 2f, num5 - LocalMapLocationMarkerIconSize / 2f, LocalMapLocationMarkerIconSize / 2f, LocalMapLocationMarkerIconSize / 2f), LocalMapLocationMarkerTexture);
 
                 }
             }
@@ -743,14 +752,6 @@ namespace ModTeleporter
                         EnableCursor(false);
                     }
                 }
-                if (Input.GetMouseButton(0))
-                {
-                    Vector2 vector = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
-                    LocalMapPlayerPosition -= vector * 20f;
-                    LocalMapPlayerPosition.x = Mathf.Clamp(LocalMapPlayerPosition.x, -LocalMapTexture.width, Screen.width);
-                    LocalMapPlayerPosition.y = Mathf.Clamp(LocalMapPlayerPosition.y, -LocalMapTexture.height, Screen.height);
-                }
-                LocalMapZoom = Mathf.Clamp(LocalMapZoom + Input.mouseScrollDelta.y / 20f, 1f, 3f);
 
                 if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.P))
                 {

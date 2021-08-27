@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("ModAPI.ModTeleporter")]
-[assembly: AssemblyDescription("ModTeleporter is a mod for Green Hell that allows a player to teleport to custom-bind or key map locations in sequence or on selection. Pess HOME (default) or the key configurable in ModAPI to open the mod screen.")]
+[assembly: AssemblyDescription("ModTeleporter is a mod for Green Hell that allows a player to teleport to custom-bound or key map locations in sequence or on selection. Press 7 (default) or the key configurable in ModAPI to open the mod screen.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Dragon Legion")]
 [assembly: AssemblyProduct("ModAPI.ModTeleporter")]

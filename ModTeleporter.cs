@@ -617,12 +617,7 @@ namespace ModTeleporter
                 {
                     for (int i = 0; i < LocalMapTab.m_MapDatas[key].m_Elemets.Count; i++)
                     {
-                        if (!LocalMapTab.m_MapDatas[key].m_Elemets[i].activeSelf)
-                        {
-                            MenuNotepad.Get().OnAddMapArea();
-                        }
                         LocalMapTab.m_MapDatas[key].m_Elemets[i].SetActive(value: true);
-                        ReplicatedNotepad.OnUnlockMapElement(LocalMapTab.m_MapDatas[key].m_Elemets[i].name);
                     }
                 }
             }
@@ -639,7 +634,6 @@ namespace ModTeleporter
                 foreach (string key in LocalMapTab.m_MapDatas.Keys)
                 {
                     LocalMapTab.m_MapDatas[key].m_Unlocked = true;
-                    ReplicatedNotepad.OnUnlockMapPage(key);
                 }
             }
             catch (Exception exc)
@@ -800,7 +794,7 @@ namespace ModTeleporter
                     GameMapsUnlocked = true;
                 }
 
-                if (GameMapsUnlocked && Input.GetKeyDown(KeyCode.M))
+                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.M))
                 {
                     if (!ShowMapUI)
                     {
@@ -978,7 +972,7 @@ namespace ModTeleporter
                     GUI.color = DefaultGuiColor;
                     GUILayout.Label($"To select a map location, press [{ModBindingKeyId}]", GUI.skin.label);
                     GUILayout.Label($"To teleport to next map location, press [6]", GUI.skin.label);
-                    GUILayout.Label($"To show the map, press [M]", GUI.skin.label);
+                    GUILayout.Label($"To show the map, press  [Left Alt]+[M]", GUI.skin.label);
                     GUILayout.Label($"To show your current GPS position and set these as custom coordinates, press [Left Alt]+[P]", GUI.skin.label);
                     GUILayout.Label($"To log debug spawners GPS positions, press [Left Alt]+[L]", GUI.skin.label);
                 }

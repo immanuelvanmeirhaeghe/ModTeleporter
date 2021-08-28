@@ -30,7 +30,7 @@ namespace ModTeleporter
         private static  float LocalMapZoom = 1f;
         private static readonly string LocalMapTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/GHMap1_HD_Icons.png";
         private Texture2D LocalMapTexture;
-        private Vector2 LocalMapPlayerPosition = Vector2.zero;
+        private Vector2 LocalMapPointerPosition = Vector2.zero;
         private Vector2 MapGridCount = new Vector2(34f, 25f);
         private Vector2 MapGridOffset = new Vector2(22f, 13f);
         private Vector2 MapOffset = new Vector2(4f, 18f);
@@ -605,12 +605,14 @@ namespace ModTeleporter
 
         private void DrawMapLocations()
         {
+            GUI.DrawTexture(new Rect(size: new Vector2((float)LocalMapTexture.width * LocalMapZoom, (float)LocalMapTexture.height * LocalMapZoom), position: LocalMapPointerPosition), LocalMapTexture);
+
             if (ShowMapUI && Input.GetMouseButton(0))
             {
                 Vector2 vector = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
-                LocalMapPlayerPosition -= vector * 20f;
-                LocalMapPlayerPosition.x = Mathf.Clamp(LocalMapPlayerPosition.x, -LocalMapTexture.width, Screen.width);
-                LocalMapPlayerPosition.y = Mathf.Clamp(LocalMapPlayerPosition.y, -LocalMapTexture.height, Screen.height);
+                LocalMapPointerPosition -= vector * 20f;
+                LocalMapPointerPosition.x = Mathf.Clamp(LocalMapPointerPosition.x, -LocalMapTexture.width, Screen.width);
+                LocalMapPointerPosition.y = Mathf.Clamp(LocalMapPointerPosition.y, -LocalMapTexture.height, Screen.height);
             }
             LocalMapZoom = Mathf.Clamp(LocalMapZoom + Input.mouseScrollDelta.y / 20f, 1f, 3f);
 
@@ -621,17 +623,16 @@ namespace ModTeleporter
                     (float gps_lat, float gps_long) mapGpsCoordinates = ConvertToMapGpsCoordinates(mapLocationsGpsCoordinates.Value);
                     float item = mapGpsCoordinates.gps_lat;
                     float item2 = mapGpsCoordinates.gps_long;
-                    float num = LocalMapPlayerPosition.x + (float)LocalMapTexture.width * LocalMapZoom;
-                    float y = LocalMapPlayerPosition.y;
+                    float num = LocalMapPointerPosition.x + (float)LocalMapTexture.width * LocalMapZoom;
+                    float y = LocalMapPointerPosition.y;
                     float num2 = ((float)LocalMapTexture.width - MapOffset.x) / MapGridCount.x * LocalMapZoom;
                     float num3 = ((float)LocalMapTexture.height - MapOffset.y) / MapGridCount.y * LocalMapZoom;
                     float WestCoordinate = num - (item - MapGridOffset.x) * num2;
                     float SouthCoordinate = y + (item2 - MapGridOffset.y) * num3;
 
                     GUI.DrawTexture(
-                        new Rect(WestCoordinate - LocalMapLocationMarkerIconSize / 2f, SouthCoordinate - LocalMapLocationMarkerIconSize / 2f, LocalMapLocationMarkerIconSize / 2f, LocalMapLocationMarkerIconSize / 2f),
+                        new Rect(WestCoordinate - LocalMapLocationMarkerIconSize / 2f, SouthCoordinate - LocalMapLocationMarkerIconSize / 2f, LocalMapLocationMarkerIconSize / 5f, LocalMapLocationMarkerIconSize / 5f),
                         LocalMapLocationMarkerTexture);
-
                 }
             }
             catch (Exception exc)

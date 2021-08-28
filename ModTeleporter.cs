@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CJTools;
+using Enums;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -45,6 +47,9 @@ namespace ModTeleporter
         private bool ShowFastTravelUI = false;
         private bool ShowModUI = false;
         private bool ShowMapUI = false;
+        public static bool GameMapsUnlocked = false;
+
+        public static GameObject OriginalGameMap;
 
         private static ItemsManager LocalItemsManager;
         private static Player LocalPlayer;
@@ -61,6 +66,7 @@ namespace ModTeleporter
         public bool IsModActiveForSingleplayer => ReplTools.AmIMaster();
 
         public static GameObject MapLocationObject = new GameObject(nameof(MapLocation));
+
         public Vector2 MapLocationsScrollViewPosition { get; private set; }
         public static string CustomX { get; set; } = string.Empty;
         public static string CustomY { get; set; } = string.Empty;
@@ -603,19 +609,47 @@ namespace ModTeleporter
             }
         }
 
+        public void UnlockAllElements()
+        {
+            try
+            {
+                foreach (string key in LocalMapTab.m_MapDatas.Keys)
+                {
+                    for (int i = 0; i < LocalMapTab.m_MapDatas[key].m_Elemets.Count; i++)
+                    {
+                        if (!LocalMapTab.m_MapDatas[key].m_Elemets[i].activeSelf)
+                        {
+                            MenuNotepad.Get().OnAddMapArea();
+                        }
+                        LocalMapTab.m_MapDatas[key].m_Elemets[i].SetActive(value: true);
+                        ReplicatedNotepad.OnUnlockMapElement(LocalMapTab.m_MapDatas[key].m_Elemets[i].name);
+                    }
+                }
+            }
+            catch (Exception exc)
+            {
+                HandleException(exc, nameof(UnlockAllElements));
+            }
+        }
+
+        public void UnlockAllPages()
+        {
+            try
+            {
+                foreach (string key in LocalMapTab.m_MapDatas.Keys)
+                {
+                    LocalMapTab.m_MapDatas[key].m_Unlocked = true;
+                    ReplicatedNotepad.OnUnlockMapPage(key);
+                }
+            }
+            catch (Exception exc)
+            {
+                HandleException(exc, nameof(UnlockAllPages));
+            }
+        }
+
         private void DrawMapLocations()
         {
-            GUI.DrawTexture(new Rect(size: new Vector2((float)LocalMapTexture.width * LocalMapZoom, (float)LocalMapTexture.height * LocalMapZoom), position: LocalMapPointerPosition), LocalMapTexture);
-
-            if (ShowMapUI && Input.GetMouseButton(0))
-            {
-                Vector2 vector = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
-                LocalMapPointerPosition -= vector * 20f;
-                LocalMapPointerPosition.x = Mathf.Clamp(LocalMapPointerPosition.x, -LocalMapTexture.width, Screen.width);
-                LocalMapPointerPosition.y = Mathf.Clamp(LocalMapPointerPosition.y, -LocalMapTexture.height, Screen.height);
-            }
-            LocalMapZoom = Mathf.Clamp(LocalMapZoom + Input.mouseScrollDelta.y / 20f, 1f, 3f);
-
             try
             {
                 foreach (var mapLocationsGpsCoordinates in MapGpsCoordinates)
@@ -639,6 +673,23 @@ namespace ModTeleporter
             {
                 HandleException(exc, nameof(DrawMapLocations));
             }
+        }
+
+        private void DrawPlayerMapLocation()
+        {
+            (float gps_lat, float gps_long) playerGpsCoordinates = ConvertToMapGpsCoordinates(LocalPlayer.transform.position);
+            float item = playerGpsCoordinates.gps_lat;
+            float item2 = playerGpsCoordinates.gps_long;
+            float num = LocalMapPointerPosition.x + (float)LocalMapTexture.width * LocalMapZoom;
+            float y = LocalMapPointerPosition.y;
+            float num2 = ((float)LocalMapTexture.width - MapOffset.x) / MapGridCount.x * LocalMapZoom;
+            float num3 = ((float)LocalMapTexture.height - MapOffset.y) / MapGridCount.y * LocalMapZoom;
+            float WestCoordinate = num - (item - MapGridOffset.x) * num2;
+            float SouthCoordinate = y + (item2 - MapGridOffset.y) * num3;
+
+            GUI.DrawTexture(
+                new Rect(WestCoordinate - LocalMapLocationMarkerIconSize / 2f, SouthCoordinate - LocalMapLocationMarkerIconSize / 2f, LocalMapLocationMarkerIconSize, LocalMapLocationMarkerIconSize),
+                LocalMapLocationMarkerTexture);
         }
 
         private (float gps_lat, float gps_long) ConvertToMapGpsCoordinates(Vector3 position)
@@ -741,7 +792,15 @@ namespace ModTeleporter
 
             if (IsModActiveForSingleplayer || IsModActiveForMultiplayer)
             {
-                if ( Input.GetKeyDown(KeyCode.M))
+                if (!GameMapsUnlocked)
+                {
+                    InitData();
+                    UnlockAllPages();
+                    UnlockAllElements();
+                    GameMapsUnlocked = true;
+                }
+
+                if (GameMapsUnlocked && Input.GetKeyDown(KeyCode.M))
                 {
                     if (!ShowMapUI)
                     {
@@ -797,7 +856,7 @@ namespace ModTeleporter
             {
                 InitData();
                 InitMapLocations();
-                DrawMapLocations();
+                ShowLocalMap();
             }
             if (ShowFastTravelUI || ShowModUI)
             {
@@ -806,6 +865,25 @@ namespace ModTeleporter
                 InitSkinUI();
                 InitWindow();
             }
+        }
+
+        private void ShowLocalMap()
+        {
+            GUI.DrawTexture(
+               new Rect(size: new Vector2((float)LocalMapTexture.width * LocalMapZoom, (float)LocalMapTexture.height * LocalMapZoom), position: LocalMapPointerPosition),
+               LocalMapTexture);
+
+            if (ShowMapUI && Input.GetMouseButton(0))
+            {
+                Vector2 vector = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+                LocalMapPointerPosition -= vector * 20f;
+                LocalMapPointerPosition.x = Mathf.Clamp(LocalMapPointerPosition.x, -LocalMapTexture.width, Screen.width);
+                LocalMapPointerPosition.y = Mathf.Clamp(LocalMapPointerPosition.y, -LocalMapTexture.height, Screen.height);
+            }
+            LocalMapZoom = Mathf.Clamp(LocalMapZoom + Input.mouseScrollDelta.y / 20f, 1f, 3f);
+
+            DrawPlayerMapLocation();
+            DrawMapLocations();
         }
 
         private void InitSkinUI()

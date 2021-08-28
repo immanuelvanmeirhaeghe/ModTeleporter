@@ -12,7 +12,7 @@ namespace ModTeleporter
 {
     /// <summary>
     /// ModTeleporter is a mod for Green Hell that allows a player to teleport to custom-bound or key map locations in sequence or on selection.
-    /// Press 7 (default) or the key configurable in ModAPI to open the mod screen.
+    /// Press Alpha7 (default) or the key configurable in ModAPI to open the mod screen.
     /// </summary>
     public class ModTeleporter : MonoBehaviour
     {
@@ -625,10 +625,12 @@ namespace ModTeleporter
                     float y = LocalMapPlayerPosition.y;
                     float num2 = ((float)LocalMapTexture.width - MapOffset.x) / MapGridCount.x * LocalMapZoom;
                     float num3 = ((float)LocalMapTexture.height - MapOffset.y) / MapGridCount.y * LocalMapZoom;
-                    float num4 = num - (item - MapGridOffset.x) * num2;
-                    float num5 = y + (item2 - MapGridOffset.y) * num3;
+                    float WestCoordinate = num - (item - MapGridOffset.x) * num2;
+                    float SouthCoordinate = y + (item2 - MapGridOffset.y) * num3;
 
-                    GUI.DrawTexture(new Rect(num4 - LocalMapLocationMarkerIconSize / 2f, num5 - LocalMapLocationMarkerIconSize / 2f, LocalMapLocationMarkerIconSize / 2f, LocalMapLocationMarkerIconSize / 2f), LocalMapLocationMarkerTexture);
+                    GUI.DrawTexture(
+                        new Rect(WestCoordinate - LocalMapLocationMarkerIconSize / 2f, SouthCoordinate - LocalMapLocationMarkerIconSize / 2f, LocalMapLocationMarkerIconSize / 2f, LocalMapLocationMarkerIconSize / 2f),
+                        LocalMapLocationMarkerTexture);
 
                 }
             }
@@ -756,13 +758,13 @@ namespace ModTeleporter
                 if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.P))
                 {
                     InitData();
-                    PrintPlayerInfo();
+                    GetPlayerGpsCoordinatesInfo();
                 }
 
                 if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.L))
                 {
                     InitData();
-                    PrintDebugSpawnerInfo();
+                    PrintDebugSpawnerInfoToLogfile();
                 }
             }
         }
@@ -983,16 +985,19 @@ namespace ModTeleporter
 
         private void MapLocationsBox()
         {
+            using (var selectInfoScope = new GUILayout.VerticalScope(GUI.skin.box))
+            {
+                GUI.color = Color.cyan;
+                GUILayout.Label($"Last map location teleported to: {LastMapLocationTeleportedTo.ToString().Replace("_", " ")}", GUI.skin.label);
+                GUI.color = DefaultGuiColor;
+                GUILayout.Label("Select next map location to teleport to. Then click [Teleport]", GUI.skin.label);
+            }
             MapLocationsScrollViewPosition = GUILayout.BeginScrollView(MapLocationsScrollViewPosition, GUI.skin.scrollView, GUILayout.MinHeight(300f));
             using (var selectScope = new GUILayout.VerticalScope(GUI.skin.box))
             {
                 string[] mapLocationNames = GetMapLocationNames();
                 if (mapLocationNames != null)
                 {
-                    GUI.color = Color.cyan;
-                    GUILayout.Label($"Last map location teleported to: {LastMapLocationTeleportedTo.ToString().Replace("_", " ")}", GUI.skin.label);
-                    GUI.color = DefaultGuiColor;
-                    GUILayout.Label("Select next map location to teleport to. Then click [Teleport]", GUI.skin.label);
                     SelectedMapLocationIndex = GUILayout.SelectionGrid(SelectedMapLocationIndex, mapLocationNames, 3, GUI.skin.button);
                 }
             }
@@ -1091,7 +1096,7 @@ namespace ModTeleporter
             }
         }
 
-        public void PrintPlayerInfo()
+        public void GetPlayerGpsCoordinatesInfo()
         {
             try
             {
@@ -1099,15 +1104,15 @@ namespace ModTeleporter
                 CustomX = playerPosition.x.ToString();
                 CustomY = playerPosition.y.ToString();
                 CustomZ = playerPosition.z.ToString();
-                ShowHUDBigInfo(HUDBigInfoMessage($"Player GPS coordinates\nx: {playerPosition.x}, y: {playerPosition.y} z: {playerPosition.z} ", MessageType.Info, Color.green));
+                ShowHUDBigInfo(HUDBigInfoMessage($"Player GPS coordinates\nx: {playerPosition.x}, y: {playerPosition.y} z: {playerPosition.z}\nset to bind as custom map coordinates. ", MessageType.Info, Color.green));
             }
             catch (Exception exc)
             {
-                HandleException(exc, nameof(PrintPlayerInfo));
+                HandleException(exc, nameof(GetPlayerGpsCoordinatesInfo));
             }
         }
 
-        public void PrintDebugSpawnerInfo()
+        public void PrintDebugSpawnerInfoToLogfile()
         {
             try
             {
@@ -1122,7 +1127,7 @@ namespace ModTeleporter
             }
             catch (Exception exc)
             {
-                HandleException(exc, nameof(PrintDebugSpawnerInfo));
+                HandleException(exc, nameof(PrintDebugSpawnerInfoToLogfile));
             }
         }
 

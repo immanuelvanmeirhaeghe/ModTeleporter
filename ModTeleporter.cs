@@ -14,7 +14,11 @@ namespace ModTeleporter
 {
     /// <summary>
     /// ModTeleporter is a mod for Green Hell that allows a player to teleport to custom-bound or key map locations in sequence or on selection.
-    /// Press Alpha7 (default) or the key configurable in ModAPI to open the mod screen.
+    /// Press Keypad6 (default) or the key configurable in ModAPI to open the mod screen.
+    /// Press Alpha6 to fast travel.
+    /// Press Left Alt + M to show the map.
+    /// Press Left Alt + P to show player GPS info.
+    /// Press Left Alt + L  to log debug spawner info. to a file.
     /// </summary>
     public class ModTeleporter : MonoBehaviour
     {
@@ -92,8 +96,10 @@ namespace ModTeleporter
             return locationNames;
         }
 
-        public static string OnlyForSinglePlayerOrHostMessage() => $"Only available for single player or when host. Host can activate using ModManager.";
-        public static string PermissionChangedMessage(string permission, string reason) => $"Permission to use mods and cheats in multiplayer was {permission} because {reason}.";
+        public static string OnlyForSinglePlayerOrHostMessage()
+            => $"Only available for single player or when host. Host can activate using ModManager.";
+        public static string PermissionChangedMessage(string permission, string reason)
+            => $"Permission to use mods and cheats in multiplayer was {permission} because {reason}.";
         public static string HUDBigInfoMessage(string message, MessageType messageType, Color? headcolor = null)
             => $"<color=#{ (headcolor != null ? ColorUtility.ToHtmlStringRGBA(headcolor.Value) : ColorUtility.ToHtmlStringRGBA(Color.red))  }>{messageType}</color>\n{message}";
 
@@ -535,8 +541,13 @@ namespace ModTeleporter
         }
 
         private static readonly string RuntimeConfigurationFile = Path.Combine(Application.dataPath.Replace("GH_Data", "Mods"), "RuntimeConfiguration.xml");
-        private static KeyCode ModBindingKeyId { get; set; } = KeyCode.Alpha7;
-        private KeyCode GetConfigurableKey(string keybindingId)
+        private static KeyCode ModKeybindingId { get; set; } = KeyCode.Keypad6;
+        private static KeyCode ModFastTravelKeybindingId { get; set; } = KeyCode.Alpha6;
+        private static KeyCode ModShowMapKeybindingId { get; set; } = KeyCode.M;
+        private static KeyCode ModShowPlayerGpsInfoKeybindingId { get; set; } = KeyCode.P;
+        private static KeyCode ModLogDebugSpawnerInfoKeybindingId { get; set; } = KeyCode.L;
+
+        private KeyCode GetConfigurableKey()
         {
             KeyCode configuredKeyCode = default;
             string configuredKeybinding = string.Empty;
@@ -551,12 +562,12 @@ namespace ModTeleporter
                         //ModAPI.Log.Write($"Reading XML runtime configuration file...");
                         while (xmlReader.Read())
                         {
-                            //ModAPI.Log.Write($"Searching configuration for Button with ID = {keybindingId}...");
-                            if (xmlReader.ReadToFollowing(nameof(Button)))
+                            //ModAPI.Log.Write($"Searching configuration for Button for Mod with ID = {ModName}...");
+                            if (xmlReader["ID"] == ModName)
                             {
-                                if (xmlReader["ID"] == keybindingId)
+                                if (xmlReader.ReadToFollowing(nameof(Button)))
                                 {
-                                    //ModAPI.Log.Write($"Found configuration for Button with ID = {keybindingId}!");
+                                    //ModAPI.Log.Write($"Found configuration for Button for Mod with ID = {ModName}!");
                                     configuredKeybinding = xmlReader.ReadElementContentAsString();
                                     //ModAPI.Log.Write($"Configured keybinding = {configuredKeybinding}.");
                                 }
@@ -566,9 +577,11 @@ namespace ModTeleporter
                     //ModAPI.Log.Write($"XML runtime configuration\n{File.ReadAllText(RuntimeConfigurationFile)}\n");
                 }
 
+                configuredKeybinding = configuredKeybinding?.Replace("NumPad", "Alpha").Replace("Oem", "");
+
                 configuredKeyCode = !string.IsNullOrEmpty(configuredKeybinding)
-                                                            ? (KeyCode)Enum.Parse(typeof(KeyCode), configuredKeybinding.Replace("NumPad", "Alpha"))
-                                                            : ModBindingKeyId;
+                                                            ? (KeyCode)Enum.Parse(typeof(KeyCode), configuredKeybinding)
+                                                            : ModKeybindingId;
                 //ModAPI.Log.Write($"Configured key code: { configuredKeyCode }");
                 return configuredKeyCode;
             }
@@ -582,7 +595,7 @@ namespace ModTeleporter
         public void Start()
         {
             ModManager.ModManager.onPermissionValueChanged += ModManager_onPermissionValueChanged;
-            ModBindingKeyId = GetConfigurableKey(nameof(ModBindingKeyId));
+            ModKeybindingId = GetConfigurableKey();
             StartCoroutine(LoadTexture(delegate (Texture2D mapt)
             {
                 LocalMapTexture = mapt;
@@ -649,14 +662,14 @@ namespace ModTeleporter
                 foreach (var mapLocationsGpsCoordinates in MapGpsCoordinates)
                 {
                     (float gps_lat, float gps_long) mapGpsCoordinates = ConvertToMapGpsCoordinates(mapLocationsGpsCoordinates.Value);
-                    float item = mapGpsCoordinates.gps_lat;
-                    float item2 = mapGpsCoordinates.gps_long;
-                    float num = LocalMapPointerPosition.x + (float)LocalMapTexture.width * LocalMapZoom;
-                    float y = LocalMapPointerPosition.y;
+                    float gpsLatitude = mapGpsCoordinates.gps_lat;
+                    float gpsLongitude = mapGpsCoordinates.gps_long;
+                    float mapPointerPosX = LocalMapPointerPosition.x + (float)LocalMapTexture.width * LocalMapZoom;
+                    float mapPointerPosY = LocalMapPointerPosition.y;
                     float num2 = ((float)LocalMapTexture.width - MapOffset.x) / MapGridCount.x * LocalMapZoom;
                     float num3 = ((float)LocalMapTexture.height - MapOffset.y) / MapGridCount.y * LocalMapZoom;
-                    float WestCoordinate = num - (item - MapGridOffset.x) * num2;
-                    float SouthCoordinate = y + (item2 - MapGridOffset.y) * num3;
+                    float WestCoordinate = mapPointerPosX - (gpsLatitude - MapGridOffset.x) * num2;
+                    float SouthCoordinate = mapPointerPosY + (gpsLongitude - MapGridOffset.y) * num3;
 
                     GUI.DrawTexture(
                         new Rect(WestCoordinate - LocalMapLocationMarkerIconSize / 2f, SouthCoordinate - LocalMapLocationMarkerIconSize / 2f, LocalMapLocationMarkerIconSize / 5f, LocalMapLocationMarkerIconSize / 5f),
@@ -754,22 +767,7 @@ namespace ModTeleporter
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Alpha6))
-            {
-                if (!ShowFastTravelUI)
-                {
-                    InitData();
-                    InitMapLocations();
-                    EnableCursor(true);
-                }
-                ToggleShowUI(0);
-                if (!ShowFastTravelUI)
-                {
-                    EnableCursor(false);
-                }
-            }
-
-            if (Input.GetKeyDown(ModBindingKeyId))
+            if (Input.GetKeyDown(ModKeybindingId))
             {
                 if (!ShowModUI)
                 {
@@ -794,7 +792,22 @@ namespace ModTeleporter
                     GameMapsUnlocked = true;
                 }
 
-                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.M))
+                if (Input.GetKeyDown(ModFastTravelKeybindingId))
+                {
+                    if (!ShowFastTravelUI)
+                    {
+                        InitData();
+                        InitMapLocations();
+                        EnableCursor(true);
+                    }
+                    ToggleShowUI(0);
+                    if (!ShowFastTravelUI)
+                    {
+                        EnableCursor(false);
+                    }
+                }
+
+                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(ModShowMapKeybindingId))
                 {
                     if (!ShowMapUI)
                     {
@@ -809,13 +822,13 @@ namespace ModTeleporter
                     }
                 }
 
-                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.P))
+                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(ModShowPlayerGpsInfoKeybindingId))
                 {
                     InitData();
                     GetPlayerGpsCoordinatesInfo();
                 }
 
-                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.L))
+                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(ModLogDebugSpawnerInfoKeybindingId))
                 {
                     InitData();
                     PrintDebugSpawnerInfoToLogfile();
@@ -888,12 +901,12 @@ namespace ModTeleporter
         private void InitWindow()
         {
             CurrentMapLocation = LastMapLocationTeleportedTo;
+            NextMapLocationID = (int)LastMapLocationTeleportedTo + 1;
+            NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
 
             if (ShowFastTravelUI)
             {
-                NextMapLocationID = (int)LastMapLocationTeleportedTo + 1;
-                NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
-                ModConfirmFastTravelDialogWindow = GUILayout.Window(GetHashCode(), ModConfirmFastTravelDialogWindow, InitModConfirmFastTravelDialogWindow, " Teleport?", GUI.skin.window);
+                ModConfirmFastTravelDialogWindow = GUI.ModalWindow(GetHashCode(), ModConfirmFastTravelDialogWindow, InitModConfirmFastTravelDialogWindow, " Teleport?", GUI.skin.window);
             }
 
             if (ShowModUI)
@@ -968,18 +981,27 @@ namespace ModTeleporter
             {
                 using (var optionsScope = new GUILayout.VerticalScope(GUI.skin.box))
                 {
-                    StatusForMultiplayer();
-                    GUI.color = DefaultGuiColor;
-                    GUILayout.Label($"To select a map location, press [{ModBindingKeyId}]", GUI.skin.label);
-                    GUILayout.Label($"To teleport to next map location, press [6]", GUI.skin.label);
-                    GUILayout.Label($"To show the map, press  [Left Alt]+[M]", GUI.skin.label);
-                    GUILayout.Label($"To show your current GPS position and set these as custom coordinates, press [Left Alt]+[P]", GUI.skin.label);
-                    GUILayout.Label($"To log debug spawners GPS positions, press [Left Alt]+[L]", GUI.skin.label);
+                    GUILayout.Label($"To toggle the main mod UI, press [{ModKeybindingId}]", GUI.skin.label);
+                    MultiplayerOptionBox();
+                    ModKeybindingOptionBox();
                 }
             }
             else
             {
                 OnlyForSingleplayerOrWhenHostBox();
+            }
+        }
+
+        private static void ModKeybindingOptionBox()
+        {
+            using (var modkeybindingScope = new GUILayout.VerticalScope(GUI.skin.box))
+            {
+                GUILayout.Label("Mod keybinding options: ", GUI.skin.label);
+                GUILayout.Label($"To select a map location, press [{ModKeybindingId}]", GUI.skin.label);
+                GUILayout.Label($"To teleport to next map location, press [{ModFastTravelKeybindingId}]", GUI.skin.label);
+                GUILayout.Label($"To show the map, press  [Left Alt]+[{ModShowMapKeybindingId}]", GUI.skin.label);
+                GUILayout.Label($"To show your current GPS position and set these as custom coordinates, press [Left Alt]+[{ModShowPlayerGpsInfoKeybindingId}]", GUI.skin.label);
+                GUILayout.Label($"To log debug spawners GPS positions, press [Left Alt]+[{ModLogDebugSpawnerInfoKeybindingId}]", GUI.skin.label);
             }
         }
 
@@ -992,34 +1014,45 @@ namespace ModTeleporter
             }
         }
 
-        private void StatusForMultiplayer()
+        private void MultiplayerOptionBox()
         {
-            string reason = string.Empty;
-            if (IsModActiveForSingleplayer || IsModActiveForMultiplayer)
+            try
             {
-                GUI.color = Color.cyan;
-                if (IsModActiveForSingleplayer)
+                using (var multiplayeroptionsScope = new GUILayout.VerticalScope(GUI.skin.box))
                 {
-                    reason = "you are the game host";
+                    GUILayout.Label("Multiplayer options: ", GUI.skin.label);
+                    string multiplayerOptionMessage = string.Empty;
+                    if (IsModActiveForSingleplayer || IsModActiveForMultiplayer)
+                    {
+                        GUI.color = Color.green;
+                        if (IsModActiveForSingleplayer)
+                        {
+                            multiplayerOptionMessage = $"you are the game host";
+                        }
+                        if (IsModActiveForMultiplayer)
+                        {
+                            multiplayerOptionMessage = $"the game host allowed usage";
+                        }
+                        _ = GUILayout.Toggle(true, PermissionChangedMessage($"granted", multiplayerOptionMessage), GUI.skin.toggle);
+                    }
+                    else
+                    {
+                        GUI.color = Color.yellow;
+                        if (!IsModActiveForSingleplayer)
+                        {
+                            multiplayerOptionMessage = $"you are not the game host";
+                        }
+                        if (!IsModActiveForMultiplayer)
+                        {
+                            multiplayerOptionMessage = $"the game host did not allow usage";
+                        }
+                        _ = GUILayout.Toggle(false, PermissionChangedMessage($"revoked", $"{multiplayerOptionMessage}"), GUI.skin.toggle);
+                    }
                 }
-                if (IsModActiveForMultiplayer)
-                {
-                    reason = "the game host allowed usage";
-                }
-                GUILayout.Toggle(true, PermissionChangedMessage($"granted", $"{reason}"), GUI.skin.toggle);
             }
-            else
+            catch (Exception exc)
             {
-                GUI.color = Color.yellow;
-                if (!IsModActiveForSingleplayer)
-                {
-                    reason = "you are not the game host";
-                }
-                if (!IsModActiveForMultiplayer)
-                {
-                    reason = "the game host did not allow usage";
-                }
-                GUILayout.Toggle(false, PermissionChangedMessage($"revoked", $"{reason}"), GUI.skin.toggle);
+                HandleException(exc, nameof(MultiplayerOptionBox));
             }
         }
 
@@ -1089,7 +1122,7 @@ namespace ModTeleporter
                 GUI.color = Color.cyan;
                 GUILayout.Label($"Teleport to {NextMapLocation.ToString().Replace("_", " ")}?", GUI.skin.label);
                 GUI.color = DefaultGuiColor;
-                using (var horizontalScope = new GUILayout.HorizontalScope(GUI.skin.box))
+                using (var dialogButtonsScope = new GUILayout.HorizontalScope(GUI.skin.box))
                 {
                     if (GUILayout.Button("Yes", GUI.skin.button))
                     {

@@ -547,7 +547,7 @@ namespace ModTeleporter
         private static KeyCode ModShowPlayerGpsInfoKeybindingId { get; set; } = KeyCode.P;
         private static KeyCode ModLogDebugSpawnerInfoKeybindingId { get; set; } = KeyCode.L;
 
-        private KeyCode GetConfigurableKey()
+        private KeyCode GetConfigurableKey(string buttonId)
         {
             KeyCode configuredKeyCode = default;
             string configuredKeybinding = string.Empty;
@@ -567,8 +567,11 @@ namespace ModTeleporter
                             {
                                 if (xmlReader.ReadToFollowing(nameof(Button)))
                                 {
-                                    //ModAPI.Log.Write($"Found configuration for Button for Mod with ID = {ModName}!");
-                                    configuredKeybinding = xmlReader.ReadElementContentAsString();
+                                    if (xmlReader["ID"] == buttonId)
+                                    {
+                                        //ModAPI.Log.Write($"Found configuration for Button with ID = {buttonId} for Mod with ID = {ModName}!");
+                                        configuredKeybinding = xmlReader.ReadElementContentAsString();
+                                    }
                                     //ModAPI.Log.Write($"Configured keybinding = {configuredKeybinding}.");
                                 }
                             }
@@ -579,15 +582,16 @@ namespace ModTeleporter
 
                 configuredKeybinding = configuredKeybinding?.Replace("NumPad", "Alpha").Replace("Oem", "");
 
-                configuredKeyCode = !string.IsNullOrEmpty(configuredKeybinding)
-                                                            ? (KeyCode)Enum.Parse(typeof(KeyCode), configuredKeybinding)
-                                                            : ModKeybindingId;
+                configuredKeyCode = (KeyCode)(!string.IsNullOrEmpty(configuredKeybinding)
+                                                            ? Enum.Parse(typeof(KeyCode), configuredKeybinding)
+                                                            : GetType().GetProperty(buttonId)?.GetValue(this));
                 //ModAPI.Log.Write($"Configured key code: { configuredKeyCode }");
                 return configuredKeyCode;
             }
             catch (Exception exc)
             {
                 HandleException(exc, nameof(GetConfigurableKey));
+                configuredKeyCode= (KeyCode)(GetType().GetProperty(buttonId)?.GetValue(this));
                 return configuredKeyCode;
             }
         }
@@ -595,7 +599,11 @@ namespace ModTeleporter
         public void Start()
         {
             ModManager.ModManager.onPermissionValueChanged += ModManager_onPermissionValueChanged;
-            ModKeybindingId = GetConfigurableKey();
+            ModKeybindingId = GetConfigurableKey(nameof(ModKeybindingId));
+            ModFastTravelKeybindingId = GetConfigurableKey(nameof(ModFastTravelKeybindingId));
+            ModShowMapKeybindingId = GetConfigurableKey(nameof(ModShowMapKeybindingId));
+            ModShowPlayerGpsInfoKeybindingId = GetConfigurableKey(nameof(ModShowPlayerGpsInfoKeybindingId));
+            ModLogDebugSpawnerInfoKeybindingId = GetConfigurableKey(nameof(ModLogDebugSpawnerInfoKeybindingId));
             StartCoroutine(LoadTexture(delegate (Texture2D mapt)
             {
                 LocalMapTexture = mapt;

@@ -33,7 +33,7 @@ namespace ModTeleporter
         private static readonly float ModScreenMinHeight = 50f;
         private static readonly float ModScreenMaxHeight = 550f;
 
-        private static  float LocalMapZoom = 1f;
+        private static float LocalMapZoom = 1f;
         private static readonly string LocalMapTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/GHMap1_HD_Icons.png";
         private Texture2D LocalMapTexture;
         private Vector2 LocalMapPointerPosition = Vector2.zero;
@@ -580,7 +580,7 @@ namespace ModTeleporter
                     //ModAPI.Log.Write($"XML runtime configuration\n{File.ReadAllText(RuntimeConfigurationFile)}\n");
                 }
 
-                configuredKeybinding = configuredKeybinding?.Replace("NumPad", "Alpha").Replace("Oem", "");
+                configuredKeybinding = configuredKeybinding?.Replace("NumPad", "Keypad").Replace("Oem", "");
 
                 configuredKeyCode = (KeyCode)(!string.IsNullOrEmpty(configuredKeybinding)
                                                             ? Enum.Parse(typeof(KeyCode), configuredKeybinding)
@@ -591,7 +591,7 @@ namespace ModTeleporter
             catch (Exception exc)
             {
                 HandleException(exc, nameof(GetConfigurableKey));
-                configuredKeyCode= (KeyCode)(GetType().GetProperty(buttonId)?.GetValue(this));
+                configuredKeyCode = (KeyCode)(GetType().GetProperty(buttonId)?.GetValue(this));
                 return configuredKeyCode;
             }
         }
@@ -914,7 +914,7 @@ namespace ModTeleporter
 
             if (ShowFastTravelUI)
             {
-                ModConfirmFastTravelDialogWindow = GUI.ModalWindow(GetHashCode(), ModConfirmFastTravelDialogWindow, InitModConfirmFastTravelDialogWindow, " Teleport?", GUI.skin.window);
+                ModConfirmFastTravelDialogWindow = GUILayout.Window(GetHashCode(), ModConfirmFastTravelDialogWindow, InitModConfirmFastTravelDialogWindow, " Teleport?", GUI.skin.window);
             }
 
             if (ShowModUI)
@@ -1000,10 +1000,11 @@ namespace ModTeleporter
             }
         }
 
-        private static void ModKeybindingOptionBox()
+        private void ModKeybindingOptionBox()
         {
             using (var modkeybindingScope = new GUILayout.VerticalScope(GUI.skin.box))
             {
+                GUI.color = DefaultGuiColor;
                 GUILayout.Label("Mod keybinding options: ", GUI.skin.label);
                 GUILayout.Label($"To select a map location, press [{ModKeybindingId}]", GUI.skin.label);
                 GUILayout.Label($"To teleport to next map location, press [{ModFastTravelKeybindingId}]", GUI.skin.label);
@@ -1234,7 +1235,7 @@ namespace ModTeleporter
                 DebugSpawner[] array = FindObjectsOfType<DebugSpawner>();
                 for (int i = 0; i < array.Length; i++)
                 {
-                   logBuilder.AppendLine(PositionInfo(array[i].gameObject.transform.position, array[i].gameObject.name));
+                    logBuilder.AppendLine(PositionInfo(array[i].gameObject.transform.position, array[i].gameObject.name));
                 }
                 ModAPI.Log.Write(logBuilder.ToString());
                 ShowHUDBigInfo(HUDBigInfoMessage($"{nameof(DebugSpawner)} info logged to\n{LogPath}.", MessageType.Info, Color.green));
@@ -1249,7 +1250,7 @@ namespace ModTeleporter
         {
             try
             {
-                string info =$"\nMapGpsCoordinates[MapLocation.{mapLocation}] = new Vector3({position.x}f, {position.y}f, {position.z}f);";
+                string info = $"\nMapGpsCoordinates[MapLocation.{mapLocation}] = new Vector3({position.x}f, {position.y}f, {position.z}f);";
                 info += $"\t[W,S] = [{ConvertToMapGpsCoordinates(position)}]";
                 return info;
             }

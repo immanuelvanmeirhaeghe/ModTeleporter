@@ -33,15 +33,17 @@ namespace ModTeleporter
         private static readonly float ModScreenMinHeight = 50f;
         private static readonly float ModScreenMaxHeight = 550f;
 
-        private static float LocalMapZoom = 1f;
         private static readonly string LocalMapTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/GHMap1_HD_Icons.png";
+        private static readonly float LocalMapLocationMarkerIconSize = 50f;
+        private static readonly string LocalMapLocationMarkerTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/marker.png";
+
+        private float LocalMapZoom = 1f;
         private Texture2D LocalMapTexture;
         private Vector2 LocalMapPointerPosition = Vector2.zero;
         private Vector2 MapGridCount = new Vector2(34f, 25f);
         private Vector2 MapGridOffset = new Vector2(22f, 13f);
         private Vector2 MapOffset = new Vector2(4f, 18f);
-        private static readonly float LocalMapLocationMarkerIconSize = 50f;
-        private static readonly string LocalMapLocationMarkerTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/marker.png";
+
         private Texture2D LocalMapLocationMarkerTexture;
         private Color DefaultGuiColor = GUI.color;
 
@@ -630,39 +632,6 @@ namespace ModTeleporter
             }
         }
 
-        public void UnlockAllElements()
-        {
-            try
-            {
-                foreach (string key in LocalMapTab.m_MapDatas.Keys)
-                {
-                    for (int i = 0; i < LocalMapTab.m_MapDatas[key].m_Elemets.Count; i++)
-                    {
-                        LocalMapTab.m_MapDatas[key].m_Elemets[i].SetActive(value: true);
-                    }
-                }
-            }
-            catch (Exception exc)
-            {
-                HandleException(exc, nameof(UnlockAllElements));
-            }
-        }
-
-        public void UnlockAllPages()
-        {
-            try
-            {
-                foreach (string key in LocalMapTab.m_MapDatas.Keys)
-                {
-                    LocalMapTab.m_MapDatas[key].m_Unlocked = true;
-                }
-            }
-            catch (Exception exc)
-            {
-                HandleException(exc, nameof(UnlockAllPages));
-            }
-        }
-
         private void DrawMapLocations()
         {
             try
@@ -672,10 +641,10 @@ namespace ModTeleporter
                     (float gps_lat, float gps_long) mapGpsCoordinates = ConvertToMapGpsCoordinates(mapLocationsGpsCoordinates.Value);
                     float gpsLatitude = mapGpsCoordinates.gps_lat;
                     float gpsLongitude = mapGpsCoordinates.gps_long;
-                    float mapPointerPosX = LocalMapPointerPosition.x + (float)LocalMapTexture.width * LocalMapZoom;
+                    float mapPointerPosX = LocalMapPointerPosition.x + LocalMapTexture.width * LocalMapZoom;
                     float mapPointerPosY = LocalMapPointerPosition.y;
-                    float num2 = ((float)LocalMapTexture.width - MapOffset.x) / MapGridCount.x * LocalMapZoom;
-                    float num3 = ((float)LocalMapTexture.height - MapOffset.y) / MapGridCount.y * LocalMapZoom;
+                    float num2 = (LocalMapTexture.width - MapOffset.x) / MapGridCount.x * LocalMapZoom;
+                    float num3 = (LocalMapTexture.height - MapOffset.y) / MapGridCount.y * LocalMapZoom;
                     float WestCoordinate = mapPointerPosX - (gpsLatitude - MapGridOffset.x) * num2;
                     float SouthCoordinate = mapPointerPosY + (gpsLongitude - MapGridOffset.y) * num3;
 
@@ -692,33 +661,48 @@ namespace ModTeleporter
 
         private void DrawPlayerMapLocation()
         {
-            (float gps_lat, float gps_long) playerGpsCoordinates = ConvertToMapGpsCoordinates(LocalPlayer.transform.position);
-            float item = playerGpsCoordinates.gps_lat;
-            float item2 = playerGpsCoordinates.gps_long;
-            float num = LocalMapPointerPosition.x + (float)LocalMapTexture.width * LocalMapZoom;
-            float y = LocalMapPointerPosition.y;
-            float num2 = ((float)LocalMapTexture.width - MapOffset.x) / MapGridCount.x * LocalMapZoom;
-            float num3 = ((float)LocalMapTexture.height - MapOffset.y) / MapGridCount.y * LocalMapZoom;
-            float WestCoordinate = num - (item - MapGridOffset.x) * num2;
-            float SouthCoordinate = y + (item2 - MapGridOffset.y) * num3;
+            try
+            {
+                (float gps_lat, float gps_long) playerGpsCoordinates = ConvertToMapGpsCoordinates(LocalPlayer.transform.position);
+                float item = playerGpsCoordinates.gps_lat;
+                float item2 = playerGpsCoordinates.gps_long;
+                float num = LocalMapPointerPosition.x + LocalMapTexture.width * LocalMapZoom;
+                float y = LocalMapPointerPosition.y;
+                float num2 = (LocalMapTexture.width - MapOffset.x) / MapGridCount.x * LocalMapZoom;
+                float num3 = (LocalMapTexture.height - MapOffset.y) / MapGridCount.y * LocalMapZoom;
+                float WestCoordinate = num - (item - MapGridOffset.x) * num2;
+                float SouthCoordinate = y + (item2 - MapGridOffset.y) * num3;
 
-            GUI.DrawTexture(
-                new Rect(WestCoordinate - LocalMapLocationMarkerIconSize / 2f, SouthCoordinate - LocalMapLocationMarkerIconSize / 2f, LocalMapLocationMarkerIconSize, LocalMapLocationMarkerIconSize),
-                LocalMapLocationMarkerTexture);
+                GUI.DrawTexture(
+                    new Rect(WestCoordinate - LocalMapLocationMarkerIconSize / 2f, SouthCoordinate - LocalMapLocationMarkerIconSize / 2f, LocalMapLocationMarkerIconSize, LocalMapLocationMarkerIconSize),
+                    LocalMapLocationMarkerTexture);
+            }
+            catch (Exception exc)
+            {
+                HandleException(exc, nameof(DrawPlayerMapLocation));
+            }
         }
 
         private (float gps_lat, float gps_long) ConvertToMapGpsCoordinates(Vector3 position)
         {
-            Vector3 position2 = LocalMapTab.m_WorldZeroDummy.position;
-            Vector3 position3 = LocalMapTab.m_WorldOneDummy.position;
-            float num = position3.x - position2.x;
-            float num2 = position3.z - position2.z;
-            float num3 = num / 35f;
-            float num4 = num2 / 27f;
-            Vector3 vector = LocalMapTab.m_WorldZeroDummy.InverseTransformPoint(position);
-            float latitude = vector.x / num3 + 20f;
-            float longitude = vector.z / num4 + 14f;
-            return (latitude, longitude);
+            try
+            {
+                Vector3 position2 = LocalMapTab.m_WorldZeroDummy.position;
+                Vector3 position3 = LocalMapTab.m_WorldOneDummy.position;
+                float num = position3.x - position2.x;
+                float num2 = position3.z - position2.z;
+                float num3 = num / 35f;
+                float num4 = num2 / 27f;
+                Vector3 vector = LocalMapTab.m_WorldZeroDummy.InverseTransformPoint(position);
+                float latitude = vector.x / num3 + 20f;
+                float longitude = vector.z / num4 + 14f;
+                return (latitude, longitude);
+            }
+            catch (Exception exc)
+            {
+                HandleException(exc, nameof(ConvertToMapGpsCoordinates));
+                return default;
+            }
         }
 
         public ModTeleporter()
@@ -795,8 +779,7 @@ namespace ModTeleporter
                 if (!GameMapsUnlocked)
                 {
                     InitData();
-                    UnlockAllPages();
-                    UnlockAllElements();
+                    LocalPlayer.UnlockMap();
                     GameMapsUnlocked = true;
                 }
 
@@ -871,7 +854,7 @@ namespace ModTeleporter
             {
                 InitData();
                 InitMapLocations();
-                ShowLocalMap();
+                InitLocalMap();
             }
             if (ShowFastTravelUI || ShowModUI)
             {
@@ -882,23 +865,30 @@ namespace ModTeleporter
             }
         }
 
-        private void ShowLocalMap()
+        private void InitLocalMap()
         {
-            GUI.DrawTexture(
-               new Rect(size: new Vector2((float)LocalMapTexture.width * LocalMapZoom, (float)LocalMapTexture.height * LocalMapZoom), position: LocalMapPointerPosition),
-               LocalMapTexture);
-
-            if (ShowMapUI && Input.GetMouseButton(0))
+            try
             {
-                Vector2 vector = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
-                LocalMapPointerPosition -= vector * 20f;
-                LocalMapPointerPosition.x = Mathf.Clamp(LocalMapPointerPosition.x, -LocalMapTexture.width, Screen.width);
-                LocalMapPointerPosition.y = Mathf.Clamp(LocalMapPointerPosition.y, -LocalMapTexture.height, Screen.height);
-            }
-            LocalMapZoom = Mathf.Clamp(LocalMapZoom + Input.mouseScrollDelta.y / 20f, 1f, 3f);
+                GUI.DrawTexture(
+                    new Rect(size: new Vector2(LocalMapTexture.width * LocalMapZoom, LocalMapTexture.height * LocalMapZoom), position: LocalMapPointerPosition),
+                    LocalMapTexture);
 
-            DrawPlayerMapLocation();
-            DrawMapLocations();
+                if (ShowMapUI && Input.GetMouseButton(0))
+                {
+                    Vector2 vector = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+                    LocalMapPointerPosition -= vector * 20f;
+                    LocalMapPointerPosition.x = Mathf.Clamp(LocalMapPointerPosition.x, -LocalMapTexture.width, Screen.width);
+                    LocalMapPointerPosition.y = Mathf.Clamp(LocalMapPointerPosition.y, -LocalMapTexture.height, Screen.height);
+                }
+                LocalMapZoom = Mathf.Clamp(LocalMapZoom + Input.mouseScrollDelta.y / 20f, 1f, 3f);
+
+                DrawPlayerMapLocation();
+                DrawMapLocations();
+            }
+            catch (Exception exc)
+            {
+                HandleException(exc, nameof(InitLocalMap));
+            }
         }
 
         private void InitSkinUI()

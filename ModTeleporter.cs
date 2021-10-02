@@ -36,15 +36,13 @@ namespace ModTeleporter
         private static readonly string LocalMapTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/GHMap1_HD_Icons.png";
         private static readonly float LocalMapLocationMarkerIconSize = 50f;
         private static readonly string LocalMapLocationMarkerTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/marker.png";
-
-        private float LocalMapZoom = 1f;
+        private static float LocalMapZoom = 1f;
         private Texture2D LocalMapTexture;
+        private Texture2D LocalMapLocationMarkerTexture;
         private Vector2 LocalMapPointerPosition = Vector2.zero;
         private Vector2 MapGridCount = new Vector2(34f, 25f);
         private Vector2 MapGridOffset = new Vector2(22f, 13f);
         private Vector2 MapOffset = new Vector2(4f, 18f);
-
-        private Texture2D LocalMapLocationMarkerTexture;
         private Color DefaultGuiColor = GUI.color;
 
         private static float ModScreenStartPositionX { get; set; } = Screen.width / 2f;
@@ -556,30 +554,21 @@ namespace ModTeleporter
 
             try
             {
-                //ModAPI.Log.Write($"Searching XML runtime configuration file {RuntimeConfigurationFile}...");
                 if (File.Exists(RuntimeConfigurationFile))
                 {
                     using (var xmlReader = XmlReader.Create(new StreamReader(RuntimeConfigurationFile)))
                     {
-                        //ModAPI.Log.Write($"Reading XML runtime configuration file...");
                         while (xmlReader.Read())
                         {
-                            //ModAPI.Log.Write($"Searching configuration for Button for Mod with ID = {ModName}...");
                             if (xmlReader["ID"] == ModName)
                             {
-                                if (xmlReader.ReadToFollowing(nameof(Button)))
+                                if (xmlReader.ReadToFollowing(nameof(Button)) && xmlReader["ID"] == buttonId)
                                 {
-                                    if (xmlReader["ID"] == buttonId)
-                                    {
-                                        //ModAPI.Log.Write($"Found configuration for Button with ID = {buttonId} for Mod with ID = {ModName}!");
-                                        configuredKeybinding = xmlReader.ReadElementContentAsString();
-                                    }
-                                    //ModAPI.Log.Write($"Configured keybinding = {configuredKeybinding}.");
+                                    configuredKeybinding = xmlReader.ReadElementContentAsString();
                                 }
                             }
                         }
                     }
-                    //ModAPI.Log.Write($"XML runtime configuration\n{File.ReadAllText(RuntimeConfigurationFile)}\n");
                 }
 
                 configuredKeybinding = configuredKeybinding?.Replace("NumPad", "Keypad").Replace("Oem", "");
@@ -587,7 +576,6 @@ namespace ModTeleporter
                 configuredKeyCode = (KeyCode)(!string.IsNullOrEmpty(configuredKeybinding)
                                                             ? Enum.Parse(typeof(KeyCode), configuredKeybinding)
                                                             : GetType().GetProperty(buttonId)?.GetValue(this));
-                //ModAPI.Log.Write($"Configured key code: { configuredKeyCode }");
                 return configuredKeyCode;
             }
             catch (Exception exc)
@@ -601,19 +589,21 @@ namespace ModTeleporter
         public void Start()
         {
             ModManager.ModManager.onPermissionValueChanged += ModManager_onPermissionValueChanged;
+            StartCoroutine(LoadTexture(delegate (Texture2D mapt)
+            {
+                LocalMapTexture = mapt;
+            }, LocalMapTextureUrl));
+
+            StartCoroutine(LoadTexture(delegate (Texture2D markert)
+            {
+                LocalMapLocationMarkerTexture = markert;
+            }, LocalMapLocationMarkerTextureUrl));
+
             ModKeybindingId = GetConfigurableKey(nameof(ModKeybindingId));
             ModFastTravelKeybindingId = GetConfigurableKey(nameof(ModFastTravelKeybindingId));
             ModShowMapKeybindingId = GetConfigurableKey(nameof(ModShowMapKeybindingId));
             ModShowPlayerGpsInfoKeybindingId = GetConfigurableKey(nameof(ModShowPlayerGpsInfoKeybindingId));
             ModLogDebugSpawnerInfoKeybindingId = GetConfigurableKey(nameof(ModLogDebugSpawnerInfoKeybindingId));
-            StartCoroutine(LoadTexture(delegate (Texture2D mapt)
-            {
-                LocalMapTexture = mapt;
-            }, LocalMapTextureUrl));
-            StartCoroutine(LoadTexture(delegate (Texture2D markert)
-            {
-                LocalMapLocationMarkerTexture = markert;
-            }, LocalMapLocationMarkerTextureUrl));
         }
 
         private IEnumerator LoadTexture(Action<Texture2D> action, string url)
@@ -854,7 +844,7 @@ namespace ModTeleporter
             {
                 InitData();
                 InitMapLocations();
-                InitLocalMap();
+                ShowLocalMap();
             }
             if (ShowFastTravelUI || ShowModUI)
             {
@@ -865,12 +855,12 @@ namespace ModTeleporter
             }
         }
 
-        private void InitLocalMap()
+        private void ShowLocalMap()
         {
             try
             {
                 GUI.DrawTexture(
-                    new Rect(size: new Vector2(LocalMapTexture.width * LocalMapZoom, LocalMapTexture.height * LocalMapZoom), position: LocalMapPointerPosition),
+                    new Rect( LocalMapPointerPosition, new Vector2(LocalMapTexture.width * LocalMapZoom, LocalMapTexture.height * LocalMapZoom)),
                     LocalMapTexture);
 
                 if (ShowMapUI && Input.GetMouseButton(0))
@@ -887,7 +877,7 @@ namespace ModTeleporter
             }
             catch (Exception exc)
             {
-                HandleException(exc, nameof(InitLocalMap));
+                HandleException(exc, nameof(ShowLocalMap));
             }
         }
 

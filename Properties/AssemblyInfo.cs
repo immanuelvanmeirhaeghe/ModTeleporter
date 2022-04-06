@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("[Dragon Legion]Immaanuel")]
 [assembly: AssemblyProduct("ModAPI.ModTeleporter")]
-[assembly: AssemblyCopyright("Copyright ©  2021")]
+[assembly: AssemblyCopyright("Copyright ©  2022")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -28,5 +28,5 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("1.0.3.3")]
-[assembly: AssemblyFileVersion("1.0.3.3")]
+[assembly: AssemblyVersion("1.0.3.4")]
+[assembly: AssemblyFileVersion("1.0.3.4")]

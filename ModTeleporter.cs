@@ -33,7 +33,7 @@ namespace ModTeleporter
         private static readonly float ModScreenMinHeight = 50f;
         private static readonly float ModScreenMaxHeight = 550f;
 
-        private static readonly string LocalMapTextureUrl = "https://drive.google.com/file/d/10nUKN60rClv_TB6Yd8QWTvMJViNKhHXL/view?usp=share_link";
+        private static readonly string LocalMapTextureUrl = "https://drive.google.com/file/d/10sdBqshL8K_L7LcQZm-IbyEIhSasMOXL/view";
         private static readonly float LocalMapLocationMarkerIconSize = 50f;
         private static readonly string LocalMapLocationMarkerTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/marker.png";
         private static float LocalMapZoom = 1f;

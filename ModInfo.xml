@@ -1,11 +1,43 @@
 <Mod ID="ModTeleporter">
-  <Compatible>2.1.3</Compatible>
-  <Button Standard="NumPad7" ID="ModBindingKeyId">
+  <Compatible></Compatible>
+  <Button Standard="NumPad6" ID="ModKeybindingId">
     <Name>
-      <EN>ModBindingKeyId</EN>
+      <EN>ModKeybindingId</EN>
     </Name>
     <Description>
-      <EN>Configrable keybinding for mod screen.</EN>
+      <EN>Configurable keybinding for mod screen.</EN>
+    </Description>
+  </Button>
+  <Button Standard="D6" ID="ModFastTravelKeybindingId">
+    <Name>
+      <EN>ModFastTravelKeybindingId</EN>
+    </Name>
+    <Description>
+      <EN>Configurable keybinding for fast travel.</EN>
+    </Description>
+  </Button>
+  <Button Standard="M" ID="ModShowMapKeybindingId">
+    <Name>
+      <EN>ModShowMapKeybindingId</EN>
+    </Name>
+    <Description>
+      <EN>Configurable keybinding to show map. Press LeftAlt +</EN>
+    </Description>
+  </Button>
+  <Button Standard="P" ID="ModShowPlayerGpsInfoKeybindingId">
+    <Name>
+      <EN>ModShowPlayerGpsInfoKeybindingId</EN>
+    </Name>
+    <Description>
+      <EN>Configurable keybinding to show player GPS info. Press LeftAlt +</EN>
+    </Description>
+  </Button>
+  <Button Standard="L" ID="ModLogDebugSpawnerInfoKeybindingId">
+    <Name>
+      <EN>ModLogDebugSpawnerInfoKeybindingId</EN>
+    </Name>
+    <Description>
+      <EN>Configurable keybinding to log DebugSpawner info. Press LeftAlt +</EN>
     </Description>
   </Button>
   <Name>
@@ -14,5 +46,5 @@
   <Description>
     <EN>ModTeleporter is a mod for Green Hell that allows a player to teleport to custom-bind or key map locations in sequence or on selection. Pess Alpha7 (default) or the key configurable in ModAPI to open the mod screen.</EN>
   </Description>
-  <Version>1.0.3.2</Version>
+  <Version>1.0.3.4</Version>
 </Mod>

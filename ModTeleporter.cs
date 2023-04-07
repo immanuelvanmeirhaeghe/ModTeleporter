@@ -33,7 +33,7 @@ namespace ModTeleporter
         private static readonly float ModScreenMinHeight = 50f;
         private static readonly float ModScreenMaxHeight = 550f;
 
-        private static readonly string LocalMapTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/GHMap1_HD_Icons.png";
+        private static readonly string LocalMapTextureUrl = "https://drive.google.com/file/d/10nUKN60rClv_TB6Yd8QWTvMJViNKhHXL/view?usp=share_link";
         private static readonly float LocalMapLocationMarkerIconSize = 50f;
         private static readonly string LocalMapLocationMarkerTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/marker.png";
         private static float LocalMapZoom = 1f;
@@ -796,7 +796,7 @@ namespace ModTeleporter
             using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url))
             {
                 yield return uwr.SendWebRequest();
-                if (uwr.isNetworkError || uwr.isHttpError)
+                if (uwr.result == UnityWebRequest.Result.ConnectionError)
                 {
                     ModAPI.Log.Write(uwr.error);
                 }
@@ -813,9 +813,9 @@ namespace ModTeleporter
             {
                 foreach (var mapLocationsGpsCoordinates in MapGpsCoordinates)
                 {
-                    (float gps_lat, float gps_long) mapGpsCoordinates = ConvertToMapGpsCoordinates(mapLocationsGpsCoordinates.Value);
-                    float gpsLatitude = mapGpsCoordinates.gps_lat;
-                    float gpsLongitude = mapGpsCoordinates.gps_long;
+                    (float gps_lat, float gps_long) = ConvertToMapGpsCoordinates(mapLocationsGpsCoordinates.Value);
+                    float gpsLatitude = gps_lat;
+                    float gpsLongitude = gps_long;
                     float mapPointerPosX = LocalMapPointerPosition.x + LocalMapTexture.width * LocalMapZoom;
                     float mapPointerPosY = LocalMapPointerPosition.y;
                     float num2 = (LocalMapTexture.width - MapOffset.x) / MapGridCount.x * LocalMapZoom;
@@ -838,9 +838,9 @@ namespace ModTeleporter
         {
             try
             {
-                (float gps_lat, float gps_long) playerGpsCoordinates = ConvertToMapGpsCoordinates(LocalPlayer.transform.position);
-                float item = playerGpsCoordinates.gps_lat;
-                float item2 = playerGpsCoordinates.gps_long;
+                (float gps_lat, float gps_long) = ConvertToMapGpsCoordinates(LocalPlayer.transform.position);
+                float item = gps_lat;
+                float item2 = gps_long;
                 float num = LocalMapPointerPosition.x + LocalMapTexture.width * LocalMapZoom;
                 float y = LocalMapPointerPosition.y;
                 float num2 = (LocalMapTexture.width - MapOffset.x) / MapGridCount.x * LocalMapZoom;

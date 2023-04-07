@@ -33,7 +33,7 @@ namespace ModTeleporter
         private static readonly float ModScreenMinHeight = 50f;
         private static readonly float ModScreenMaxHeight = 550f;
 
-        private static readonly string LocalMapTextureUrl = "https://live.staticflickr.com/65535/52798747887_b00230d414_b.jpg";
+        private static readonly string LocalMapTextureUrl = "https://live.staticflickr.com/65535/52799732305_cb0a8a8394_b.jpg";
         private static readonly float LocalMapLocationMarkerIconSize = 50f;
         private static readonly string LocalMapLocationMarkerTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/marker.png";
         private static float LocalMapZoom = 1f;
@@ -756,17 +756,59 @@ namespace ModTeleporter
                     }
                 }
 
-                configuredKeybinding = configuredKeybinding?.Replace("NumPad", "Keypad");
+                if (!string.IsNullOrEmpty(configuredKeybinding))
+                {
+                    configuredKeyCode = EnumUtils<KeyCode>.GetValue(configuredKeybinding);
+                }
+                else
+                {
+                    if (buttonId == nameof(ModKeybindingId))
+                    {
+                        configuredKeyCode = ModKeybindingId;
+                    }
+                    if (buttonId == nameof(ModFastTravelKeybindingId))
+                    {
+                        configuredKeyCode = ModFastTravelKeybindingId;
+                    }
+                    if (buttonId == nameof(ModShowMapKeybindingId))
+                    {
+                        configuredKeyCode = ModShowMapKeybindingId;
+                    }
+                    if (buttonId == nameof(ModShowPlayerGpsInfoKeybindingId))
+                    {
+                        configuredKeyCode = ModShowPlayerGpsInfoKeybindingId;
+                    }
+                    if (buttonId == nameof(ModLogDebugSpawnerInfoKeybindingId))
+                    {
+                        configuredKeyCode = ModLogDebugSpawnerInfoKeybindingId;
+                    }
+                }
 
-                configuredKeyCode = (KeyCode)(!string.IsNullOrEmpty(configuredKeybinding)
-                                                            ? Enum.Parse(typeof(KeyCode), configuredKeybinding)
-                                                            : GetType().GetProperty(buttonId)?.GetValue(this));
                 return configuredKeyCode;
             }
             catch (Exception exc)
             {
                 HandleException(exc, nameof(GetConfigurableKey));
-                configuredKeyCode = (KeyCode)(GetType().GetProperty(buttonId)?.GetValue(this));
+                if (buttonId == nameof(ModKeybindingId))
+                {
+                    configuredKeyCode = ModKeybindingId;
+                }
+                if (buttonId == nameof(ModFastTravelKeybindingId))
+                {
+                    configuredKeyCode = ModFastTravelKeybindingId;
+                }
+                if (buttonId == nameof(ModShowMapKeybindingId))
+                {
+                    configuredKeyCode = ModShowMapKeybindingId;
+                }
+                if (buttonId == nameof(ModShowPlayerGpsInfoKeybindingId))
+                {
+                    configuredKeyCode = ModShowPlayerGpsInfoKeybindingId;
+                }
+                if (buttonId == nameof(ModLogDebugSpawnerInfoKeybindingId))
+                {
+                    configuredKeyCode = ModLogDebugSpawnerInfoKeybindingId;
+                }
                 return configuredKeyCode;
             }
         }

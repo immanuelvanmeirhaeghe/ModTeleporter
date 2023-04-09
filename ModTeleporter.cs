@@ -855,7 +855,7 @@ namespace ModTeleporter
             {
                 foreach (var mapLocationsGpsCoordinates in MapGpsCoordinates)
                 {
-                    (float gps_lat, float gps_long) = ConvertToMapGpsCoordinates(mapLocationsGpsCoordinates.Value);
+                    (int gps_lat, int gps_long) = LocalToGpsCoordinates(mapLocationsGpsCoordinates.Value);
                     float gpsLatitude = gps_lat;
                     float gpsLongitude = gps_long;
                     float mapPointerPosX = LocalMapPointerPosition.x + LocalMapTexture.width * LocalMapZoom;
@@ -880,7 +880,7 @@ namespace ModTeleporter
         {
             try
             {
-                (float gps_lat, float gps_long) = ConvertToMapGpsCoordinates(LocalPlayer.transform.position);
+                (int gps_lat, int gps_long) = LocalToGpsCoordinates(LocalPlayer.transform.position);
                 float gpsLatitude = gps_lat;
                 float gpsLongitude = gps_long;
                 float mapPointerPosX = LocalMapPointerPosition.x + LocalMapTexture.width * LocalMapZoom;
@@ -900,7 +900,7 @@ namespace ModTeleporter
             }
         }
 
-        private (float gps_lat, float gps_long) ConvertToMapGpsCoordinates(Vector3 position)
+        private (int gps_lat, int gps_long) LocalToGpsCoordinates(Vector3 localPosition)
         {
             try
             {
@@ -909,17 +909,33 @@ namespace ModTeleporter
                 float deltaX = position3.x - position2.x;
                 float deltaZ = position3.z - position2.z;
                 float num3 = deltaX / 35f;
-                float num4 = deltaZ / 35f;
-                Vector3 vector = LocalMapTab.m_WorldZeroDummy.InverseTransformPoint(position);
-                float gps_lat = vector.x / num3 + 19f;
-                float gps_long = vector.z / num4 + 13f;
+                float num4 = deltaZ / 27f;
+                Vector3 vector = LocalMapTab.m_WorldZeroDummy.InverseTransformPoint(localPosition);
+                int gps_lat = Mathf.FloorToInt(vector.x / num3) + 20;
+                int gps_long = Mathf.FloorToInt(vector.z / num4) + 14;
                 return (gps_lat, gps_long);
             }
             catch (Exception exc)
             {
-                HandleException(exc, nameof(ConvertToMapGpsCoordinates));
+                HandleException(exc, nameof(LocalToGpsCoordinates));
                 return default;
             }
+        }
+
+        public Vector3 LocalToWorldPosition(Vector3 localPosition)
+        {
+            Vector3 worldPosition = Vector3.zero;
+            worldPosition.y = Screen.height * localPosition.y;
+            if (Screen.width / (float)Screen.height < CJTools.Math.s_AspectRatio16By9)
+            {
+                worldPosition.x = Screen.width * localPosition.x;
+            }
+            else
+            {
+                worldPosition.x = Screen.width * 0.5f + Screen.height * CJTools.Math.s_AspectRatio16By9 * localPosition.x * 0.5f;
+            }
+
+            return worldPosition;
         }
 
         public ModTeleporter()
@@ -1426,7 +1442,7 @@ namespace ModTeleporter
                 CustomX = playerPosition.x.ToString();
                 CustomY = playerPosition.y.ToString();
                 CustomZ = playerPosition.z.ToString();
-                ShowHUDBigInfo(HUDBigInfoMessage($"Player GPS coordinates\nx: {CustomX}, y: {CustomY} z: {CustomZ}\nset to bind as custom map coordinates\n (W,S): {ConvertToMapGpsCoordinates(playerPosition)} . ", MessageType.Info, Color.green));
+                ShowHUDBigInfo(HUDBigInfoMessage($"Player GPS coordinates\nx: {CustomX}, y: {CustomY} z: {CustomZ}\nset to bind as custom map coordinates\n (W,S): {LocalToGpsCoordinates(playerPosition)} . ", MessageType.Info, Color.green));
             }
             catch (Exception exc)
             {
@@ -1439,10 +1455,10 @@ namespace ModTeleporter
             try
             {
                 StringBuilder logBuilder = new StringBuilder($"");
-                DebugSpawner[] array = FindObjectsOfType<DebugSpawner>();
-                for (int i = 0; i < array.Length; i++)
+                DebugSpawner[] debugSpawners = FindObjectsOfType<DebugSpawner>();
+                for (int i = 0; i < debugSpawners.Length; i++)
                 {
-                    logBuilder.AppendLine(PositionInfo(array[i].gameObject.transform.position, array[i].gameObject.name));
+                    logBuilder.AppendLine(PositionInfo(debugSpawners[i].gameObject.transform.position, debugSpawners[i].gameObject.name));
                 }
                 ModAPI.Log.Write(logBuilder.ToString());
                 ShowHUDBigInfo(HUDBigInfoMessage($"{nameof(DebugSpawner)} info logged to\n{LogPath}.", MessageType.Info, Color.green));
@@ -1453,12 +1469,11 @@ namespace ModTeleporter
             }
         }
 
-        public string PositionInfo(Vector3 position, string mapLocation = "Teleport_Start_Location")
+        public string PositionInfo(Vector3 position, string mapLocation)
         {
             try
             {
                 string info = $"\nMapGpsCoordinates[MapLocation.{mapLocation}] = new Vector3({position.x}f, {position.y}f, {position.z}f);";
-                info += $"\t(W,S) = {ConvertToMapGpsCoordinates(position)}";
                 return info;
             }
             catch (Exception exc)

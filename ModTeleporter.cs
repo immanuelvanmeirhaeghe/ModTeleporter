@@ -40,8 +40,8 @@ namespace ModTeleporter
         private Texture2D LocalMapTexture;
         private Texture2D LocalMapLocationMarkerTexture;
         private Vector2 LocalMapPointerPosition = Vector2.zero;
-        private Vector2 MapGridCount = new Vector2(34f, 25f);
-        private Vector2 MapGridOffset = new Vector2(22f, 13f);
+        private Vector2 MapGridCount = new Vector2(35f, 35f);
+        private Vector2 MapGridOffset = new Vector2(19f, 13f);
         private Vector2 MapOffset = new Vector2(4f, 18f);
         private Color DefaultGuiColor = GUI.color;
 
@@ -866,7 +866,7 @@ namespace ModTeleporter
                     float SouthCoordinate = mapPointerPosY + (gpsLongitude - MapGridOffset.y) * num3;
 
                     GUI.DrawTexture(
-                        new Rect(WestCoordinate - LocalMapLocationMarkerIconSize / 2f, SouthCoordinate - LocalMapLocationMarkerIconSize / 2f, LocalMapLocationMarkerIconSize / 5f, LocalMapLocationMarkerIconSize / 5f),
+                        new Rect(WestCoordinate, SouthCoordinate, LocalMapLocationMarkerIconSize / 5f, LocalMapLocationMarkerIconSize / 5f),
                         LocalMapLocationMarkerTexture);
                 }
             }
@@ -881,17 +881,17 @@ namespace ModTeleporter
             try
             {
                 (float gps_lat, float gps_long) = ConvertToMapGpsCoordinates(LocalPlayer.transform.position);
-                float item = gps_lat;
-                float item2 = gps_long;
-                float num = LocalMapPointerPosition.x + LocalMapTexture.width * LocalMapZoom;
-                float y = LocalMapPointerPosition.y;
+                float gpsLatitude = gps_lat;
+                float gpsLongitude = gps_long;
+                float mapPointerPosX = LocalMapPointerPosition.x + LocalMapTexture.width * LocalMapZoom;
+                float mapPointerPosY = LocalMapPointerPosition.y;
                 float num2 = (LocalMapTexture.width - MapOffset.x) / MapGridCount.x * LocalMapZoom;
                 float num3 = (LocalMapTexture.height - MapOffset.y) / MapGridCount.y * LocalMapZoom;
-                float WestCoordinate = num - (item - MapGridOffset.x) * num2;
-                float SouthCoordinate = y + (item2 - MapGridOffset.y) * num3;
+                float WestCoordinate = mapPointerPosX - (gpsLatitude - MapGridOffset.x) * num2;
+                float SouthCoordinate = mapPointerPosY + (gpsLongitude - MapGridOffset.y) * num3;
 
                 GUI.DrawTexture(
-                    new Rect(WestCoordinate - LocalMapLocationMarkerIconSize / 2f, SouthCoordinate - LocalMapLocationMarkerIconSize / 2f, LocalMapLocationMarkerIconSize, LocalMapLocationMarkerIconSize),
+                    new Rect(WestCoordinate, SouthCoordinate, LocalMapLocationMarkerIconSize, LocalMapLocationMarkerIconSize),
                     LocalMapLocationMarkerTexture);
             }
             catch (Exception exc)
@@ -906,14 +906,14 @@ namespace ModTeleporter
             {
                 Vector3 position2 = LocalMapTab.m_WorldZeroDummy.position;
                 Vector3 position3 = LocalMapTab.m_WorldOneDummy.position;
-                float num = position3.x - position2.x;
-                float num2 = position3.z - position2.z;
-                float num3 = num / 35f;
-                float num4 = num2 / 27f;
+                float deltaX = position3.x - position2.x;
+                float deltaZ = position3.z - position2.z;
+                float num3 = deltaX / 35f;
+                float num4 = deltaZ / 35f;
                 Vector3 vector = LocalMapTab.m_WorldZeroDummy.InverseTransformPoint(position);
-                float latitude = vector.x / num3 + 20f;
-                float longitude = vector.z / num4 + 14f;
-                return (latitude, longitude);
+                float gps_lat = vector.x / num3 + 19f;
+                float gps_long = vector.z / num4 + 13f;
+                return (gps_lat, gps_long);
             }
             catch (Exception exc)
             {
@@ -1426,7 +1426,7 @@ namespace ModTeleporter
                 CustomX = playerPosition.x.ToString();
                 CustomY = playerPosition.y.ToString();
                 CustomZ = playerPosition.z.ToString();
-                ShowHUDBigInfo(HUDBigInfoMessage($"Player GPS coordinates\nx: {playerPosition.x}, y: {playerPosition.y} z: {playerPosition.z}\nset to bind as custom map coordinates. ", MessageType.Info, Color.green));
+                ShowHUDBigInfo(HUDBigInfoMessage($"Player GPS coordinates\nx: {CustomX}, y: {CustomY} z: {CustomZ}\nset to bind as custom map coordinates\n (W,S): {ConvertToMapGpsCoordinates(playerPosition)} . ", MessageType.Info, Color.green));
             }
             catch (Exception exc)
             {
@@ -1458,7 +1458,7 @@ namespace ModTeleporter
             try
             {
                 string info = $"\nMapGpsCoordinates[MapLocation.{mapLocation}] = new Vector3({position.x}f, {position.y}f, {position.z}f);";
-                info += $"\t[W,S] = [{ConvertToMapGpsCoordinates(position)}]";
+                info += $"\t(W,S) = {ConvertToMapGpsCoordinates(position)}";
                 return info;
             }
             catch (Exception exc)

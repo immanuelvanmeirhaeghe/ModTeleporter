@@ -1,9 +1,13 @@
 ﻿using CJTools;
-using Enums;
+using ModTeleporter.Data.Enums;
+using ModTeleporter.Data.Interfaces;
+using ModTeleporter.Data.Modding;
+using ModTeleporter.Managers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Xml;
 using UnityEngine;
@@ -25,66 +29,92 @@ namespace ModTeleporter
         private static ModTeleporter Instance;
 
         private static readonly string LogPath = $"{Application.dataPath.Replace("GH_Data", "Logs")}/{nameof(ModTeleporter)}.log";
+        private static readonly string RuntimeConfiguration = Path.Combine(Application.dataPath.Replace("GH_Data", "Mods"), "RuntimeConfiguration.xml");
         private static readonly string ModName = nameof(ModTeleporter);
-        private static readonly float ModScreenTotalWidth = 850f;
-        private static readonly float ModScreenTotalHeight = 500f;
-        private static readonly float ModScreenMinWidth = 800f;
-        private static readonly float ModScreenMaxWidth = 850f;
-        private static readonly float ModScreenMinHeight = 50f;
-        private static readonly float ModScreenMaxHeight = 550f;
+
+        private static float ModTeleporterScreenTotalWidth { get; set; } = 800f;
+        private static float ModTeleporterScreenTotalHeight { get; set; } = 500f;
+        private static float ModTeleporterScreenMinWidth { get; set; } = 800f;
+        private static float ModTeleporterScreenMaxWidth { get; set; } = Screen.width;
+        private static float ModTeleporterScreenMinHeight { get; set; } = 50f;
+        private static float ModTeleporterScreenMaxHeight { get; set; } = Screen.height;
+        private static float ModTeleporterScreenStartPositionX { get; set; } = Screen.width / 2f;
+        private static float ModTeleporterScreenStartPositionY { get; set; } = Screen.height / 2f;
+        private static bool IsModTeleporterMinimized { get; set; } = false;
+        private static int ModTeleporterScreenId { get; set; }
+
+        private static float ConfirmFastTravelScreenTotalWidth { get; set; } = 400;
+        private static float ConfirmFastTravelScreenTotalHeight { get; set; } = 400f;
+        private static float ConfirmFastTravelScreenMinWidth { get; set; } = 400f;
+        private static float ConfirmFastTravelScreenMaxWidth { get; set; } = Screen.width;
+        private static float ConfirmFastTravelScreenMinHeight { get; set; } = 50f;
+        private static float ConfirmFastTravelScreenMaxHeight { get; set; } = Screen.height;
+        private static float ConfirmFastTravelScreenStartPositionX { get; set; } = Screen.width / 2f;
+        private static float ConfirmFastTravelScreenStartPositionY { get; set; } = Screen.height / 2f;
+        private static bool IsConfirmFastTravelScreenMinimized { get; set; } = false;
 
         private static readonly string LocalMapTextureUrl = "https://live.staticflickr.com/65535/52799732305_cb0a8a8394_b.jpg";
         private static readonly float LocalMapLocationMarkerIconSize = 50f;
         private static readonly string LocalMapLocationMarkerTextureUrl = "https://modapi.survivetheforest.net/uploads/objects/9/marker.png";
-        private static float LocalMapZoom = 1f;
-        private Texture2D LocalMapTexture;
-        private Texture2D LocalMapLocationMarkerTexture;
+        private float LocalMapZoom { get; set; } = 1f;
+        private Texture2D LocalMapTexture { get; set; }
+        private Texture2D LocalMapLocationMarkerTexture { get; set; }
+
         private Vector2 LocalMapPointerPosition = Vector2.zero;
-        private Vector2 MapGridCount = new Vector2(35f, 35f);
+        private Vector2 MapGridCount { get; set; } = new Vector2(35f, 35f);
         private Vector2 MapGridOffset = new Vector2(19f, 13f);
         private Vector2 MapOffset = new Vector2(4f, 18f);
-        private Color DefaultGuiColor = GUI.color;
+                
+        private bool ShowModTeleporterScreen { get; set; } = false;
+        private bool ShowFastTravelScreen { get; set; } = false;
+        private bool ShowMap { get; set; } = false;
+        private bool ShowModInfo { get; set; } = false;
 
-        private static float ModScreenStartPositionX { get; set; } = Screen.width / 2f;
-        private static float ModScreenStartPositionY { get; set; } = Screen.height / 2f;
-        private static bool IsMinimized { get; set; } = false;
-        private bool ShowFastTravelUI = false;
-        private bool ShowModUI = false;
-        private bool ShowMapUI = false;
-        public static bool GameMapsUnlocked = false;
+        private bool GameMapsUnlocked { get; set; } = false;
 
-        public static GameObject OriginalGameMap;
-
+        private static StylingManager LocalStylingManager;
         private static ItemsManager LocalItemsManager;
         private static Player LocalPlayer;
         private static HUDManager LocalHUDManager;
         private static MapTab LocalMapTab;
 
-        public static Rect ModTeleporterScreen = new Rect(ModScreenStartPositionX, ModScreenStartPositionY, ModScreenTotalWidth, ModScreenTotalHeight);
-        public static Rect ModConfirmFastTravelDialogWindow = new Rect(Screen.width / 2f, Screen.height / 2f, 450f, 100f);
+        private KeyCode ShortcutKey { get; set; } = KeyCode.Keypad6;
+        private KeyCode FastTravelShortcutKey { get; set; } = KeyCode.Alpha6;
+        private KeyCode CustomMapShortcutKey { get; set; } = KeyCode.M;
+        private KeyCode PlayerGpsShortcutKey { get; set; } = KeyCode.P;
+        private KeyCode LogDebugSpawnerInfoShortcutKey { get; set; } = KeyCode.L;
 
-        public static Dictionary<int, MapLocation> MapLocations = new Dictionary<int, MapLocation>();
-        public static Dictionary<MapLocation, Vector3> MapGpsCoordinates = new Dictionary<MapLocation, Vector3>();
+        private static Rect ModTeleporterScreen = new Rect(ModTeleporterScreenStartPositionX, ModTeleporterScreenStartPositionY, ModTeleporterScreenTotalWidth, ModTeleporterScreenTotalHeight);        
+        private static Rect ConfirmFastTravelScreen  = new Rect(ConfirmFastTravelScreenStartPositionX, ConfirmFastTravelScreenStartPositionY, ConfirmFastTravelScreenTotalWidth, ConfirmFastTravelScreenTotalHeight);
+
+        public Dictionary<int, MapLocation> MapLocations = new Dictionary<int, MapLocation>();
+        public Dictionary<MapLocation, Vector3> MapGpsCoordinates = new Dictionary<MapLocation, Vector3>();
 
         public bool IsModActiveForMultiplayer { get; private set; }
         public bool IsModActiveForSingleplayer => ReplTools.AmIMaster();
 
+        public IConfigurableMod SelectedMod { get; set; } = default;
+
         public static GameObject MapLocationObject = new GameObject(nameof(MapLocation));
 
-        public Vector2 MapLocationsScrollViewPosition { get; private set; }
-        public static string CustomX { get; set; } = string.Empty;
-        public static string CustomY { get; set; } = string.Empty;
-        public static string CustomZ { get; set; } = string.Empty;
+        public Vector2 MapLocationsScrollViewPosition { get; set; } = Vector2.zero;
+        public string CustomX { get; set; } = string.Empty;
+        public string CustomY { get; set; } = string.Empty;
+        public string CustomZ { get; set; } = string.Empty;
+       
+        public Vector3 CustomGpsCoordinates  = Vector3.zero;
+        public Vector3 GpsCoordinates = Vector3.zero;
 
-        public static Vector3 CustomGpsCoordinates = Vector3.zero;
-        public static Vector3 GpsCoordinates = Vector3.zero;
-        public static MapLocation CurrentMapLocation = MapLocation.Teleport_Start_Location;
-        public static MapLocation NextMapLocation = MapLocation.Teleport_Start_Location;
-        public static MapLocation LastMapLocationTeleportedTo = MapLocation.Teleport_Start_Location;
-        public static string SelectedMapLocationName = string.Empty;
-        public static int NextMapLocationID = (int)NextMapLocation;
-        public static int SelectedMapLocationIndex = 0;
-        public static string[] GetMapLocationNames()
+        public Vector2 ModInfoScrollViewPosition { get; set; } = Vector2.zero;
+
+        public MapLocation CurrentMapLocation { get; set; } = MapLocation.Teleport_Start_Location;
+        public MapLocation NextMapLocation { get; set; } = MapLocation.Teleport_Start_Location;
+        public MapLocation LastMapLocationTeleportedTo { get; set; } = MapLocation.Teleport_Start_Location;
+        public string SelectedMapLocationName { get; set; } = string.Empty;
+        public int NextMapLocationID { get; set; } = 0;
+        public int SelectedMapLocationIndex { get; set; } = 0;
+      
+        public string[] GetMapLocationNames()
         {
             string[] locationNames = Enum.GetNames(typeof(MapLocation));
 
@@ -96,18 +126,103 @@ namespace ModTeleporter
             return locationNames;
         }
 
-        public static string OnlyForSinglePlayerOrHostMessage()
-            => $"Only available for single player or when host. Host can activate using ModManager.";
-        public static string PermissionChangedMessage(string permission, string reason)
+        private string OnlyForSinglePlayerOrHostMessage()
+             => "Only available for single player or when host. Host can activate using ModManager.";
+        private string PermissionChangedMessage(string permission, string reason)
             => $"Permission to use mods and cheats in multiplayer was {permission} because {reason}.";
-        public static string HUDBigInfoMessage(string message, MessageType messageType, Color? headcolor = null)
+        private string HUDBigInfoMessage(string message, MessageType messageType, Color? headcolor = null)
             => $"<color=#{(headcolor != null ? ColorUtility.ToHtmlStringRGBA(headcolor.Value) : ColorUtility.ToHtmlStringRGBA(Color.red))}>{messageType}</color>\n{message}";
+        private void OnlyForSingleplayerOrWhenHostBox()
+        {
+            using (var infoScope = new GUILayout.HorizontalScope(GUI.skin.box))
+            {
+                GUILayout.Label(OnlyForSinglePlayerOrHostMessage(), LocalStylingManager.ColoredCommentLabel(Color.yellow));
+            }
+        }
+
+        public KeyCode GetShortcutKey(string buttonID)
+        {
+            var ConfigurableModList = GetModList();
+            if (ConfigurableModList != null && ConfigurableModList.Count > 0)
+            {
+                SelectedMod = ConfigurableModList.Find(cfgMod => cfgMod.ID == ModName);
+                return SelectedMod.ConfigurableModButtons.Find(cfgButton => cfgButton.ID == buttonID).ShortcutKey;
+            }
+            else
+            {
+                switch (buttonID)
+                {
+                    case nameof(ShortcutKey):
+                        return KeyCode.Keypad6;
+                    case nameof(FastTravelShortcutKey):
+                        return KeyCode.Alpha6;
+                    case nameof(CustomMapShortcutKey):
+                        return KeyCode.M;
+                    case nameof(PlayerGpsShortcutKey):
+                        return KeyCode.P;
+                    case nameof(LogDebugSpawnerInfoShortcutKey):
+                        return KeyCode.L;
+                    default:
+                        return KeyCode.None;
+                }
+            }
+        }
+
+        private List<IConfigurableMod> GetModList()
+        {
+            List<IConfigurableMod> modList = new List<IConfigurableMod>();
+            try
+            {
+                if (File.Exists(RuntimeConfiguration))
+                {
+                    using (XmlReader configFileReader = XmlReader.Create(new StreamReader(RuntimeConfiguration)))
+                    {
+                        while (configFileReader.Read())
+                        {
+                            configFileReader.ReadToFollowing("Mod");
+                            do
+                            {
+                                string gameID = GameID.GreenHell.ToString();
+                                string modID = configFileReader.GetAttribute(nameof(IConfigurableMod.ID));
+                                string uniqueID = configFileReader.GetAttribute(nameof(IConfigurableMod.UniqueID));
+                                string version = configFileReader.GetAttribute(nameof(IConfigurableMod.Version));
+
+                                var configurableMod = new ConfigurableMod(gameID, modID, uniqueID, version);
+
+                                configFileReader.ReadToDescendant("Button");
+                                do
+                                {
+                                    string buttonID = configFileReader.GetAttribute(nameof(IConfigurableModButton.ID));
+                                    string buttonKeyBinding = configFileReader.ReadElementContentAsString();
+
+                                    configurableMod.AddConfigurableModButton(buttonID, buttonKeyBinding);
+
+                                } while (configFileReader.ReadToNextSibling("Button"));
+
+                                if (!modList.Contains(configurableMod))
+                                {
+                                    modList.Add(configurableMod);
+                                }
+
+                            } while (configFileReader.ReadToNextSibling("Mod"));
+                        }
+                    }
+                }
+                return modList;
+            }
+            catch (Exception exc)
+            {
+                HandleException(exc, nameof(GetModList));
+                modList = new List<IConfigurableMod>();
+                return modList;
+            }
+        }
 
         private void HandleException(Exception exc, string methodName)
         {
-            string info = $"[{ModName}:{methodName}] throws exception:\n{exc.Message}";
+            string info = $"[{ModName}:{methodName}] throws exception -  {exc.TargetSite?.Name}:\n{exc.Message}\n{exc.InnerException}\n{exc.Source}\n{exc.StackTrace}";
             ModAPI.Log.Write(info);
-            ShowHUDBigInfo(HUDBigInfoMessage(info, MessageType.Error, Color.red));
+            Debug.Log(info);        
         }
 
         private void ModManager_onPermissionValueChanged(bool optionValue)
@@ -122,12 +237,13 @@ namespace ModTeleporter
                             );
         }
 
-        private void InitData()
+        protected virtual void InitData()
         {
             LocalHUDManager = HUDManager.Get();
             LocalItemsManager = ItemsManager.Get();
             LocalPlayer = Player.Get();
             LocalMapTab = MapTab.Get();
+            LocalStylingManager = StylingManager.Get();
         }
 
         private void InitMapLocations()
@@ -725,97 +841,10 @@ namespace ModTeleporter
             MapGpsCoordinates[MapLocation.Lovers_05] = new Vector3(1175.947f, 185.0796f, 1505.912f);	// [W,S] = [(28.89572, 23.8565)]
         }
 
-        private static readonly string RuntimeConfigurationFile = Path.Combine(Application.dataPath.Replace("GH_Data", "Mods"), "RuntimeConfiguration.xml");
-        private static KeyCode ModKeybindingId { get; set; } = KeyCode.Keypad6;
-        private static KeyCode ModFastTravelKeybindingId { get; set; } = KeyCode.Alpha6;
-        private static KeyCode ModShowMapKeybindingId { get; set; } = KeyCode.M;
-        private static KeyCode ModShowPlayerGpsInfoKeybindingId { get; set; } = KeyCode.P;
-        private static KeyCode ModLogDebugSpawnerInfoKeybindingId { get; set; } = KeyCode.L;
-
-        private KeyCode GetConfigurableKey(string buttonId)
-        {
-            KeyCode configuredKeyCode = default;
-            string configuredKeybinding = string.Empty;
-
-            try
-            {
-                if (File.Exists(RuntimeConfigurationFile))
-                {
-                    using (var xmlReader = XmlReader.Create(new StreamReader(RuntimeConfigurationFile)))
-                    {
-                        while (xmlReader.Read())
-                        {
-                            if (xmlReader["ID"] == ModName)
-                            {
-                                if (xmlReader.ReadToFollowing(nameof(Button)) && xmlReader["ID"] == buttonId)
-                                {
-                                    configuredKeybinding = xmlReader.ReadElementContentAsString();
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(configuredKeybinding))
-                {
-                    configuredKeyCode = EnumUtils<KeyCode>.GetValue(configuredKeybinding);
-                }
-                else
-                {
-                    if (buttonId == nameof(ModKeybindingId))
-                    {
-                        configuredKeyCode = ModKeybindingId;
-                    }
-                    if (buttonId == nameof(ModFastTravelKeybindingId))
-                    {
-                        configuredKeyCode = ModFastTravelKeybindingId;
-                    }
-                    if (buttonId == nameof(ModShowMapKeybindingId))
-                    {
-                        configuredKeyCode = ModShowMapKeybindingId;
-                    }
-                    if (buttonId == nameof(ModShowPlayerGpsInfoKeybindingId))
-                    {
-                        configuredKeyCode = ModShowPlayerGpsInfoKeybindingId;
-                    }
-                    if (buttonId == nameof(ModLogDebugSpawnerInfoKeybindingId))
-                    {
-                        configuredKeyCode = ModLogDebugSpawnerInfoKeybindingId;
-                    }
-                }
-
-                return configuredKeyCode;
-            }
-            catch (Exception exc)
-            {
-                HandleException(exc, nameof(GetConfigurableKey));
-                if (buttonId == nameof(ModKeybindingId))
-                {
-                    configuredKeyCode = ModKeybindingId;
-                }
-                if (buttonId == nameof(ModFastTravelKeybindingId))
-                {
-                    configuredKeyCode = ModFastTravelKeybindingId;
-                }
-                if (buttonId == nameof(ModShowMapKeybindingId))
-                {
-                    configuredKeyCode = ModShowMapKeybindingId;
-                }
-                if (buttonId == nameof(ModShowPlayerGpsInfoKeybindingId))
-                {
-                    configuredKeyCode = ModShowPlayerGpsInfoKeybindingId;
-                }
-                if (buttonId == nameof(ModLogDebugSpawnerInfoKeybindingId))
-                {
-                    configuredKeyCode = ModLogDebugSpawnerInfoKeybindingId;
-                }
-                return configuredKeyCode;
-            }
-        }
-
-        public void Start()
+        protected virtual void Start()
         {
             ModManager.ModManager.onPermissionValueChanged += ModManager_onPermissionValueChanged;
+            
             StartCoroutine(LoadTexture(delegate (Texture2D mapt)
             {
                 LocalMapTexture = mapt;
@@ -826,11 +855,11 @@ namespace ModTeleporter
                 LocalMapLocationMarkerTexture = markert;
             }, LocalMapLocationMarkerTextureUrl));
 
-            ModKeybindingId = GetConfigurableKey(nameof(ModKeybindingId));
-            ModFastTravelKeybindingId = GetConfigurableKey(nameof(ModFastTravelKeybindingId));
-            ModShowMapKeybindingId = GetConfigurableKey(nameof(ModShowMapKeybindingId));
-            ModShowPlayerGpsInfoKeybindingId = GetConfigurableKey(nameof(ModShowPlayerGpsInfoKeybindingId));
-            ModLogDebugSpawnerInfoKeybindingId = GetConfigurableKey(nameof(ModLogDebugSpawnerInfoKeybindingId));
+            ShortcutKey = GetShortcutKey(nameof(ShortcutKey));
+            FastTravelShortcutKey = GetShortcutKey(nameof(FastTravelShortcutKey));
+            CustomMapShortcutKey = GetShortcutKey(nameof(CustomMapShortcutKey));
+            PlayerGpsShortcutKey = GetShortcutKey(nameof(PlayerGpsShortcutKey));
+            LogDebugSpawnerInfoShortcutKey = GetShortcutKey(nameof(LogDebugSpawnerInfoShortcutKey));
         }
 
         private IEnumerator LoadTexture(Action<Texture2D> action, string url)
@@ -990,18 +1019,18 @@ namespace ModTeleporter
             hudBigInfo.Show(true);
         }
 
-        private void Update()
+        protected virtual void Update()
         {
-            if (Input.GetKeyDown(ModKeybindingId))
+            if (Input.GetKeyDown(ShortcutKey))
             {
-                if (!ShowModUI)
+                if (!ShowModTeleporterScreen)
                 {
                     InitData();
                     InitMapLocations();
                     EnableCursor(true);
                 }
-                ToggleShowUI(1);
-                if (!ShowModUI)
+                ToggleShowUI(0);
+                if (!ShowModTeleporterScreen)
                 {
                     EnableCursor(false);
                 }
@@ -1016,43 +1045,43 @@ namespace ModTeleporter
                     GameMapsUnlocked = true;
                 }
 
-                if (Input.GetKeyDown(ModFastTravelKeybindingId))
+                if (Input.GetKeyDown(FastTravelShortcutKey))
                 {
-                    if (!ShowFastTravelUI)
+                    if (!ShowFastTravelScreen)
                     {
                         InitData();
                         InitMapLocations();
                         EnableCursor(true);
                     }
-                    ToggleShowUI(0);
-                    if (!ShowFastTravelUI)
+                    ToggleShowUI(1);
+                    if (!ShowFastTravelScreen)
                     {
                         EnableCursor(false);
                     }
                 }
 
-                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(ModShowMapKeybindingId))
+                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(CustomMapShortcutKey))
                 {
-                    if (!ShowMapUI)
+                    if (!ShowMap)
                     {
                         InitData();
                         InitMapLocations();
                         EnableCursor(true);
                     }
                     ToggleShowUI(2);
-                    if (!ShowMapUI)
+                    if (!ShowMap)
                     {
                         EnableCursor(false);
                     }
                 }
 
-                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(ModShowPlayerGpsInfoKeybindingId))
+                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(PlayerGpsShortcutKey))
                 {
                     InitData();
                     GetPlayerGpsCoordinatesInfo();
                 }
 
-                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(ModLogDebugSpawnerInfoKeybindingId))
+                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(LogDebugSpawnerInfoShortcutKey))
                 {
                     InitData();
                     PrintDebugSpawnerInfoToLogfile();
@@ -1060,59 +1089,68 @@ namespace ModTeleporter
             }
         }
 
-        private void ToggleShowUI(int level)
+        private void ToggleShowUI(int controlId)
         {
-            switch (level)
+            switch (controlId)
             {
                 case 0:
-                    ShowFastTravelUI = !ShowFastTravelUI;
-                    break;
+                    ShowModTeleporterScreen = !ShowModTeleporterScreen;
+                    return;
                 case 1:
-                    ShowModUI = !ShowModUI;
-                    break;
+                    ShowFastTravelScreen = !ShowFastTravelScreen;
+                    return;
                 case 2:
-                    ShowMapUI = !ShowMapUI;
-                    break;
+                    ShowMap = !ShowMap;
+                    return;
+                case 3:
+                    ShowModInfo = !ShowModInfo;
+                    return;
                 default:
-                    ShowFastTravelUI = !ShowFastTravelUI;
-                    ShowModUI = !ShowModUI;
-                    ShowMapUI = !ShowMapUI;
-                    break;
+                    ShowModTeleporterScreen = !ShowModTeleporterScreen;                
+                    ShowFastTravelScreen = !ShowFastTravelScreen;
+                    ShowModInfo = !ShowModInfo;
+                    return;
             }
         }
 
         private void OnGUI()
         {
-            if (ShowMapUI)
+            if (ShowMap)
             {
                 InitData();
                 InitMapLocations();
-                ShowLocalMap();
+                ShowMapWindow();
             }
-            if (ShowFastTravelUI || ShowModUI)
+            if (ShowFastTravelScreen)
             {
                 InitData();
                 InitMapLocations();
                 InitSkinUI();
-                InitWindow();
+                ShowFastTravelWindow();
+            }
+            if (ShowModTeleporterScreen)
+            {
+                InitData();
+                InitMapLocations();
+                InitSkinUI();
+                ShowTeleporterWindow();
             }
         }
 
-        private void ShowLocalMap()
+        private void ShowMapWindow()
         {
             try
             {
-                GUI.DrawTexture(
-                    new Rect(LocalMapPointerPosition, new Vector2(LocalMapTexture.width * LocalMapZoom, LocalMapTexture.height * LocalMapZoom)),
-                    LocalMapTexture);
+                GUI.DrawTexture( new Rect(LocalMapPointerPosition, new Vector2(LocalMapTexture.width * LocalMapZoom, LocalMapTexture.height * LocalMapZoom)), LocalMapTexture);
 
-                if (ShowMapUI && Input.GetMouseButton(0))
+                if (ShowMap && Input.GetMouseButton(0))
                 {
-                    Vector2 vector = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+                    Vector2 vector = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));                    
                     LocalMapPointerPosition -= vector * 20f;
                     LocalMapPointerPosition.x = Mathf.Clamp(LocalMapPointerPosition.x, -LocalMapTexture.width, Screen.width);
                     LocalMapPointerPosition.y = Mathf.Clamp(LocalMapPointerPosition.y, -LocalMapTexture.height, Screen.height);
                 }
+
                 LocalMapZoom = Mathf.Clamp(LocalMapZoom + Input.mouseScrollDelta.y / 20f, 1f, 3f);
 
                 DrawPlayerMapLocation();
@@ -1120,7 +1158,7 @@ namespace ModTeleporter
             }
             catch (Exception exc)
             {
-                HandleException(exc, nameof(ShowLocalMap));
+                HandleException(exc, nameof(ShowMapWindow));
             }
         }
 
@@ -1129,33 +1167,37 @@ namespace ModTeleporter
             GUI.skin = ModAPI.Interface.Skin;
         }
 
-        private void InitWindow()
+        private void ShowFastTravelWindow()
         {
+            ConfirmFastTravelScreen = GUILayout.Window(GetHashCode(), ConfirmFastTravelScreen, InitConfirmFastTravelScreen, " Fast travel?", GUI.skin.window);
+        }
+
+        private void ShowTeleporterWindow()
+        {
+            if (ModTeleporterScreenId < 0)
+            {
+                ModTeleporterScreenId = GetHashCode();
+            }
+            string modTeleporterScreenTitle = $"{ModName} created by [Dragon Legion] Immaanuel#4300";
+
             CurrentMapLocation = LastMapLocationTeleportedTo;
             NextMapLocationID = (int)LastMapLocationTeleportedTo + 1;
             NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
 
-            if (ShowFastTravelUI)
-            {
-                ModConfirmFastTravelDialogWindow = GUILayout.Window(GetHashCode(), ModConfirmFastTravelDialogWindow, InitModConfirmFastTravelDialogWindow, " Teleport?", GUI.skin.window);
-            }
-
-            if (ShowModUI)
-            {
-                ModTeleporterScreen = GUILayout.Window(GetHashCode(), ModTeleporterScreen, InitMapsScreen, ModName,
-                                                                                                          GUI.skin.window,
-                                                                                                          GUILayout.ExpandWidth(true),
-                                                                                                          GUILayout.MinWidth(ModScreenMinWidth),
-                                                                                                          GUILayout.MaxWidth(ModScreenMaxWidth),
-                                                                                                          GUILayout.ExpandHeight(true),
-                                                                                                          GUILayout.MinHeight(ModScreenMinHeight),
-                                                                                                          GUILayout.MaxHeight(ModScreenMaxHeight));
-            }
+            ModTeleporterScreen = GUILayout.Window(ModTeleporterScreenId, ModTeleporterScreen, InitModTeleporterScreen, modTeleporterScreenTitle,
+                                                                                                        GUI.skin.window,
+                                                                                                        GUILayout.ExpandWidth(true),
+                                                                                                        GUILayout.MinWidth(ModTeleporterScreenMinWidth),
+                                                                                                        GUILayout.MaxWidth(ModTeleporterScreenMaxWidth),
+                                                                                                        GUILayout.ExpandHeight(true),
+                                                                                                        GUILayout.MinHeight(ModTeleporterScreenMinHeight),
+                                                                                                        GUILayout.MaxHeight(ModTeleporterScreenMaxHeight));
         }
 
         private void ScreenMenuBox()
         {
-            if (GUI.Button(new Rect(ModTeleporterScreen.width - 40f, 0f, 20f, 20f), "-", GUI.skin.button))
+            string CollapseButtonText = IsModTeleporterMinimized ? "O" : "-";
+            if (GUI.Button(new Rect(ModTeleporterScreen.width - 40f, 0f, 20f, 20f), CollapseButtonText, GUI.skin.button))
             {
                 CollapseWindow();
             }
@@ -1168,37 +1210,42 @@ namespace ModTeleporter
 
         private void CollapseWindow()
         {
-            if (!IsMinimized)
+            ModTeleporterScreenStartPositionX = ModTeleporterScreen.x;
+            ModTeleporterScreenStartPositionY = ModTeleporterScreen.y;
+            ModTeleporterScreenTotalWidth = ModTeleporterScreen.width;
+
+            if (!IsModTeleporterMinimized)
             {
-                ModTeleporterScreen = new Rect(ModScreenStartPositionX, ModScreenStartPositionY, ModScreenTotalWidth, ModScreenMinHeight);
-                IsMinimized = true;
+                ModTeleporterScreen = new Rect(ModTeleporterScreenStartPositionX, ModTeleporterScreenStartPositionY, ModTeleporterScreenTotalWidth, ModTeleporterScreenMinHeight);
+                IsModTeleporterMinimized = true;
             }
             else
             {
-                ModTeleporterScreen = new Rect(ModScreenStartPositionX, ModScreenStartPositionY, ModScreenTotalWidth, ModScreenTotalHeight);
-                IsMinimized = false;
+                ModTeleporterScreen = new Rect(ModTeleporterScreenStartPositionX, ModTeleporterScreenStartPositionY, ModTeleporterScreenTotalWidth, ModTeleporterScreenTotalHeight);
+                IsModTeleporterMinimized = false;
             }
-            InitWindow();
+            ShowTeleporterWindow();
         }
 
         private void CloseWindow()
         {
-            ShowFastTravelUI = false;
-            ShowModUI = false;
+            ShowFastTravelScreen = false;
+            ShowModTeleporterScreen = false;
+            ShowMap = false;
             EnableCursor(false);
         }
 
-        private void InitMapsScreen(int windowID)
+        private void InitModTeleporterScreen(int windowID)
         {
-            ModScreenStartPositionX = ModTeleporterScreen.x;
-            ModScreenStartPositionY = ModTeleporterScreen.y;
+            ModTeleporterScreenStartPositionX = ModTeleporterScreen.x;
+            ModTeleporterScreenStartPositionY = ModTeleporterScreen.y;
 
-            using (var modContentScope = new GUILayout.VerticalScope(GUI.skin.box))
+            using (new GUILayout.VerticalScope(GUI.skin.box))
             {
                 ScreenMenuBox();
-                if (!IsMinimized)
+                if (!IsModTeleporterMinimized)
                 {
-                    ModOptionsBox();
+                    ModTeleporterManagerBox();
                     CustomMapLocationBox();
                     MapLocationsBox();
                 }
@@ -1206,15 +1253,29 @@ namespace ModTeleporter
             GUI.DragWindow(new Rect(0f, 0f, 10000f, 10000f));
         }
 
-        private void ModOptionsBox()
+        private void ModTeleporterManagerBox()
         {
             if (IsModActiveForSingleplayer || IsModActiveForMultiplayer)
             {
-                using (var optionsScope = new GUILayout.VerticalScope(GUI.skin.box))
+                using (new GUILayout.VerticalScope(GUI.skin.box))
                 {
-                    GUILayout.Label($"To toggle the main mod UI, press [{ModKeybindingId}]", GUI.skin.label);
-                    MultiplayerOptionBox();
-                    ModKeybindingOptionBox();
+                    GUILayout.Label($"{ModName} Manager", LocalStylingManager.ColoredHeaderLabel(Color.yellow));
+
+                    GUILayout.Label($"{ModName} Options", LocalStylingManager.ColoredSubHeaderLabel(Color.yellow));
+
+                    using (new GUILayout.VerticalScope(GUI.skin.box))
+                    {
+                        if (GUILayout.Button($"Mod Info", GUI.skin.button))
+                        {
+                            ToggleShowUI(3);
+                        }
+                        if (ShowModInfo)
+                        {
+                            ModInfoBox();
+                        }
+                        MultiplayerOptionBox();
+                        ShortcutKeyInfoBox();
+                    }
                 }
             }
             else
@@ -1223,26 +1284,52 @@ namespace ModTeleporter
             }
         }
 
-        private void ModKeybindingOptionBox()
+        private void ModInfoBox()
         {
-            using (var modkeybindingScope = new GUILayout.VerticalScope(GUI.skin.box))
+            using (new GUILayout.VerticalScope(GUI.skin.box))
             {
-                GUI.color = DefaultGuiColor;
-                GUILayout.Label("Mod keybinding options: ", GUI.skin.label);
-                GUILayout.Label($"To select a map location, press [{ModKeybindingId}]", GUI.skin.label);
-                GUILayout.Label($"To teleport to next map location, press [{ModFastTravelKeybindingId}]", GUI.skin.label);
-                GUILayout.Label($"To show the map, press  [Left Alt]+[{ModShowMapKeybindingId}]", GUI.skin.label);
-                GUILayout.Label($"To show your current GPS position and set these as custom coordinates, press [Left Alt]+[{ModShowPlayerGpsInfoKeybindingId}]", GUI.skin.label);
-                GUILayout.Label($"To log debug spawners GPS positions, press [Left Alt]+[{ModLogDebugSpawnerInfoKeybindingId}]", GUI.skin.label);
-            }
-        }
+                ModInfoScrollViewPosition = GUILayout.BeginScrollView(ModInfoScrollViewPosition, GUI.skin.scrollView, GUILayout.MinHeight(150f));
 
-        private void OnlyForSingleplayerOrWhenHostBox()
-        {
-            using (var infoScope = new GUILayout.HorizontalScope(GUI.skin.box))
-            {
-                GUI.color = Color.yellow;
-                GUILayout.Label(OnlyForSinglePlayerOrHostMessage(), GUI.skin.label);
+                GUILayout.Label("Mod Info", LocalStylingManager.ColoredSubHeaderLabel(Color.cyan));
+
+                using (var gidScope = new GUILayout.HorizontalScope(GUI.skin.box))
+                {
+                    GUILayout.Label($"{nameof(IConfigurableMod.GameID)}:", LocalStylingManager.FormFieldNameLabel);
+                    GUILayout.Label($"{SelectedMod.GameID}", LocalStylingManager.FormFieldValueLabel);
+                }
+                using (var midScope = new GUILayout.HorizontalScope(GUI.skin.box))
+                {
+                    GUILayout.Label($"{nameof(IConfigurableMod.ID)}:", LocalStylingManager.FormFieldNameLabel);
+                    GUILayout.Label($"{SelectedMod.ID}", LocalStylingManager.FormFieldValueLabel);
+                }
+                using (var uidScope = new GUILayout.HorizontalScope(GUI.skin.box))
+                {
+                    GUILayout.Label($"{nameof(IConfigurableMod.UniqueID)}:", LocalStylingManager.FormFieldNameLabel);
+                    GUILayout.Label($"{SelectedMod.UniqueID}", LocalStylingManager.FormFieldValueLabel);
+                }
+                using (var versionScope = new GUILayout.HorizontalScope(GUI.skin.box))
+                {
+                    GUILayout.Label($"{nameof(IConfigurableMod.Version)}:", LocalStylingManager.FormFieldNameLabel);
+                    GUILayout.Label($"{SelectedMod.Version}", LocalStylingManager.FormFieldValueLabel);
+                }
+
+                GUILayout.Label("Buttons Info", LocalStylingManager.ColoredSubHeaderLabel(Color.cyan));
+
+                foreach (var configurableModButton in SelectedMod.ConfigurableModButtons)
+                {
+                    using (var btnidScope = new GUILayout.HorizontalScope(GUI.skin.box))
+                    {
+                        GUILayout.Label($"{nameof(IConfigurableModButton.ID)}:", LocalStylingManager.FormFieldNameLabel);
+                        GUILayout.Label($"{configurableModButton.ID}", LocalStylingManager.FormFieldValueLabel);
+                    }
+                    using (var btnbindScope = new GUILayout.HorizontalScope(GUI.skin.box))
+                    {
+                        GUILayout.Label($"{nameof(IConfigurableModButton.KeyBinding)}:", LocalStylingManager.FormFieldNameLabel);
+                        GUILayout.Label($"{configurableModButton.KeyBinding}", LocalStylingManager.FormFieldValueLabel);
+                    }
+                }
+
+                GUILayout.EndScrollView();
             }
         }
 
@@ -1250,13 +1337,12 @@ namespace ModTeleporter
         {
             try
             {
-                using (var multiplayeroptionsScope = new GUILayout.VerticalScope(GUI.skin.box))
+                using (new GUILayout.VerticalScope(GUI.skin.box))
                 {
-                    GUILayout.Label("Multiplayer options: ", GUI.skin.label);
                     string multiplayerOptionMessage = string.Empty;
+                    GUILayout.Label("Multiplayer Info", LocalStylingManager.ColoredSubHeaderLabel(Color.cyan));
                     if (IsModActiveForSingleplayer || IsModActiveForMultiplayer)
                     {
-                        GUI.color = Color.green;
                         if (IsModActiveForSingleplayer)
                         {
                             multiplayerOptionMessage = $"you are the game host";
@@ -1265,11 +1351,10 @@ namespace ModTeleporter
                         {
                             multiplayerOptionMessage = $"the game host allowed usage";
                         }
-                        _ = GUILayout.Toggle(true, PermissionChangedMessage($"granted", multiplayerOptionMessage), GUI.skin.toggle);
+                        GUILayout.Label($"{PermissionChangedMessage($"granted", multiplayerOptionMessage)}", LocalStylingManager.ColoredToggleValueTextLabel(true, Color.green, Color.yellow));
                     }
                     else
                     {
-                        GUI.color = Color.yellow;
                         if (!IsModActiveForSingleplayer)
                         {
                             multiplayerOptionMessage = $"you are not the game host";
@@ -1278,7 +1363,7 @@ namespace ModTeleporter
                         {
                             multiplayerOptionMessage = $"the game host did not allow usage";
                         }
-                        _ = GUILayout.Toggle(false, PermissionChangedMessage($"revoked", $"{multiplayerOptionMessage}"), GUI.skin.toggle);
+                        GUILayout.Label($"{PermissionChangedMessage($"revoked", multiplayerOptionMessage)}", LocalStylingManager.ColoredToggleValueTextLabel(false, Color.green, Color.yellow));
                     }
                 }
             }
@@ -1288,22 +1373,65 @@ namespace ModTeleporter
             }
         }
 
+        private void ShortcutKeyInfoBox()
+        {
+            using (new GUILayout.VerticalScope(GUI.skin.box))
+            {
+                GUILayout.Label($"Shortcut key info", LocalStylingManager.ColoredSubHeaderLabel(Color.cyan));
+
+                using (new GUILayout.HorizontalScope(GUI.skin.box))
+                {
+                    GUILayout.Label($"To select a map location", LocalStylingManager.FormFieldNameLabel);
+                    GUILayout.Label($"[{ShortcutKey}]", LocalStylingManager.FormFieldValueLabel);
+                }
+                
+                using (new GUILayout.HorizontalScope(GUI.skin.box))
+                {
+                    GUILayout.Label($"To teleport to next map location", LocalStylingManager.FormFieldNameLabel);
+                    GUILayout.Label($"[{FastTravelShortcutKey}]", LocalStylingManager.FormFieldValueLabel);
+                }
+
+                using (new GUILayout.HorizontalScope(GUI.skin.box))
+                {
+                    GUILayout.Label($"To show the map", LocalStylingManager.FormFieldNameLabel);
+                    GUILayout.Label($"[LeftAlt]+[{CustomMapShortcutKey}]", LocalStylingManager.FormFieldValueLabel);
+                }
+
+                using (new GUILayout.HorizontalScope(GUI.skin.box))
+                {
+                    GUILayout.Label($"To show your current GPS position and set these as custom coordinates", LocalStylingManager.FormFieldNameLabel);
+                    GUILayout.Label($"[LeftAlt]+[{PlayerGpsShortcutKey}]", LocalStylingManager.FormFieldValueLabel);
+                }
+
+                using (new GUILayout.HorizontalScope(GUI.skin.box))
+                {
+                    GUILayout.Label($"To log debug spawners GPS positions", LocalStylingManager.FormFieldNameLabel);
+                    GUILayout.Label($"[LeftAlt]+[{LogDebugSpawnerInfoShortcutKey}]", LocalStylingManager.FormFieldValueLabel);
+                }
+            }
+        }
+
         private void CustomMapLocationBox()
         {
-            using (var customScope = new GUILayout.VerticalScope(GUI.skin.box))
+            using (new GUILayout.VerticalScope(GUI.skin.box))
             {
-                GUI.color = Color.cyan;
-                GUILayout.Label($"Current custom map location set to GPS coordinates: x: {CustomGpsCoordinates.x}f, y: {CustomGpsCoordinates.y}f, z: {CustomGpsCoordinates.z}f", GUI.skin.label);
-                GUI.color = DefaultGuiColor;
-                GUILayout.Label($"Set GPS coordinates x, y and z to bind to your custom map location. Then click [Bind custom].", GUI.skin.label);
+                using (new GUILayout.HorizontalScope(GUI.skin.box))
+                {
+                    GUILayout.Label($"Current custom map location set to GPS coordinates (W,S): {LocalToGpsCoordinates(CustomGpsCoordinates)}:", LocalStylingManager.ColoredFieldNameLabel(Color.cyan));
+                    GUILayout.Label($"x: {CustomGpsCoordinates.x}f, y: {CustomGpsCoordinates.y}f, z: {CustomGpsCoordinates.z}f", LocalStylingManager.ColoredFieldValueLabel(Color.cyan));
+                }
+
+                GUILayout.Label($"Set GPS coordinates x, y and z to bind to your custom map location. Then click [Bind custom].", LocalStylingManager.TextLabel);
+
                 using (var coordScope = new GUILayout.HorizontalScope(GUI.skin.box))
                 {
-                    GUILayout.Label("x: ", GUI.skin.label);
-                    CustomX = GUILayout.TextField(CustomX, GUI.skin.textField);
-                    GUILayout.Label("y: ", GUI.skin.label);
-                    CustomY = GUILayout.TextField(CustomY, GUI.skin.textField);
-                    GUILayout.Label("z: ", GUI.skin.label);
-                    CustomZ = GUILayout.TextField(CustomZ, GUI.skin.textField);
+                    GUILayout.Label("x: ", LocalStylingManager.FormFieldNameLabel);
+                    CustomX = GUILayout.TextField(CustomX, LocalStylingManager.FormInputTextField);
+                    GUILayout.Label("y: ", LocalStylingManager.FormFieldNameLabel);
+                    CustomY = GUILayout.TextField(CustomY, LocalStylingManager.FormInputTextField);
+                    GUILayout.Label("z: ", LocalStylingManager.FormFieldNameLabel);
+                    CustomZ = GUILayout.TextField(CustomZ, LocalStylingManager.FormInputTextField);
+
                     if (GUILayout.Button("Bind custom", GUI.skin.button, GUILayout.Width(150f)))
                     {
                         if (float.TryParse(CustomX, out CustomGpsCoordinates.x) &&
@@ -1323,37 +1451,56 @@ namespace ModTeleporter
 
         private void MapLocationsBox()
         {
-            using (var selectInfoScope = new GUILayout.VerticalScope(GUI.skin.box))
+            using (new GUILayout.VerticalScope(GUI.skin.box))
             {
-                GUI.color = Color.cyan;
-                GUILayout.Label($"Last map location teleported to: {LastMapLocationTeleportedTo.ToString().Replace("_", " ")}", GUI.skin.label);
-                GUI.color = DefaultGuiColor;
-                GUILayout.Label("Select next map location to teleport to. Then click [Teleport]", GUI.skin.label);
+                using (new GUILayout.HorizontalScope(GUI.skin.box))
+                {
+                    GUILayout.Label($"Last map location teleported to:", LocalStylingManager.ColoredFieldNameLabel(Color.cyan));
+                    GUILayout.Label($"{LastMapLocationTeleportedTo.ToString().Replace("_", " ")}", LocalStylingManager.ColoredFieldValueLabel(Color.cyan));
+                }
+
+                GUILayout.Label("Select next map location to teleport to.", LocalStylingManager.TextLabel);
+
+                MapLocationsScrollViewBox();
+
+                using (new GUILayout.HorizontalScope(GUI.skin.box))
+                {
+                    NextMapLocationID = (int)EnumUtils<MapLocation>.GetValue(SelectedMapLocationName);
+                    NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
+                    GpsCoordinates = MapGpsCoordinates.GetValueOrDefault(NextMapLocation);
+
+                    GUILayout.Label($"Teleport to {SelectedMapLocationName} at (W,S) {LocalToGpsCoordinates(GpsCoordinates)}?", LocalStylingManager.TextLabel);
+                    if (GUILayout.Button("Go", GUI.skin.button, GUILayout.Width(150f)))
+                    {
+                        OnClickTeleport();
+                        CloseWindow();
+                    }
+                }
             }
+        }
+
+        private void MapLocationsScrollViewBox()
+        {
             MapLocationsScrollViewPosition = GUILayout.BeginScrollView(MapLocationsScrollViewPosition, GUI.skin.scrollView, GUILayout.MinHeight(300f));
-            using (var selectScope = new GUILayout.VerticalScope(GUI.skin.box))
+            using (new GUILayout.VerticalScope(GUI.skin.box))
             {
                 string[] mapLocationNames = GetMapLocationNames();
                 if (mapLocationNames != null)
                 {
                     SelectedMapLocationIndex = GUILayout.SelectionGrid(SelectedMapLocationIndex, mapLocationNames, 3, GUI.skin.button);
+                    SelectedMapLocationName = mapLocationNames[SelectedMapLocationIndex].Replace(" ", "_");
                 }
             }
             GUILayout.EndScrollView();
-            if (GUILayout.Button("Teleport", GUI.skin.button))
-            {
-                OnClickTeleport();
-                CloseWindow();
-            }
         }
 
-        private void InitModConfirmFastTravelDialogWindow(int windowID)
+        private void InitConfirmFastTravelScreen(int windowID)
         {
-            using (var dialogScope = new GUILayout.VerticalScope(GUI.skin.box))
+            using (new GUILayout.VerticalScope(GUI.skin.box))
             {
                 GUI.color = Color.cyan;
                 GUILayout.Label($"Teleport to {NextMapLocation.ToString().Replace("_", " ")}?", GUI.skin.label);
-                GUI.color = DefaultGuiColor;
+                
                 using (var dialogButtonsScope = new GUILayout.HorizontalScope(GUI.skin.box))
                 {
                     if (GUILayout.Button("Yes", GUI.skin.button))
@@ -1383,7 +1530,7 @@ namespace ModTeleporter
         {
             try
             {
-                if (ShowModUI || ShowFastTravelUI)
+                if (ShowModTeleporterScreen || ShowFastTravelScreen)
                 {
                     string[] mapLocationNames = GetMapLocationNames();
                     if (mapLocationNames != null)

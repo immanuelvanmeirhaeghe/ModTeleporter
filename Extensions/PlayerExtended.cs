@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using ModTeleporter.Managers;
+using UnityEngine;
 
-namespace ModTeleporter
+namespace ModTeleporter.Extensions
 {
     class PlayerExtended : Player
     {
@@ -8,6 +9,7 @@ namespace ModTeleporter
         {
             base.Start();
             new GameObject($"__{nameof(ModTeleporter) }__").AddComponent<ModTeleporter>();
+            new GameObject($"__{nameof(StylingManager)}__").AddComponent<StylingManager>();
         }
     }
 }

@@ -22,8 +22,7 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
-  <ItemGroup>
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Reference Include="BaseModLib">
       <HintPath>../../../libs/BaseModLib.dll</HintPath>
@@ -347,8 +346,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Enums.cs" />
+    <Compile Include="Data\Enums.cs" />
     <Compile Include="Extensions\PlayerExtended.cs" />
+    <Compile Include="Data\Interfaces\IConfigurableMod.cs" />
+    <Compile Include="Data\Interfaces\IConfigurableModButton.cs" />
+    <Compile Include="Data\Modding\ConfigurableMod.cs" />
+    <Compile Include="Data\Modding\ConfigurableModButton.cs" />
+    <Compile Include="Managers\StylingManager.cs" />
     <Compile Include="ModTeleporter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

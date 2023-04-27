@@ -1519,7 +1519,7 @@ namespace ModTeleporter
                 int _SelectedMapLocationIndex = SelectedMapLocationIndex;
                 if (mapLocationNames != null)
                 {
-                    SelectedMapLocationIndex = GUILayout.SelectionGrid(SelectedMapLocationIndex, mapLocationNames, 3, LocalStylingManager.ColoredSelectedGridButton(_SelectedMapLocationIndex!= SelectedMapLocationIndex), GUILayout.Width(150f));
+                    SelectedMapLocationIndex = GUILayout.SelectionGrid(SelectedMapLocationIndex, mapLocationNames, 3, LocalStylingManager.ColoredSelectedGridButton(_SelectedMapLocationIndex!= SelectedMapLocationIndex), GUILayout.MinWidth(150f), GUILayout.ExpandWidth(true));
                     SelectedMapLocationName = mapLocationNames[SelectedMapLocationIndex].Replace(" ", "_");
                 }
             }

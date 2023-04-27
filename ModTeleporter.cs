@@ -1228,6 +1228,7 @@ namespace ModTeleporter
             ModTeleporterScreenStartPositionX = ModTeleporterScreen.x;
             ModTeleporterScreenStartPositionY = ModTeleporterScreen.y;
             ModTeleporterScreenTotalWidth = ModTeleporterScreen.width;
+            ModTeleporterScreenTotalHeight = ModTeleporterScreen.height - deltaHeight;
 
             if (IsModTeleporterScreenMinimized)
             {
@@ -1235,8 +1236,6 @@ namespace ModTeleporter
             }
             else
             {
-                ModTeleporterScreenTotalHeight = ModTeleporterScreen.height - deltaHeight;
-
                 ModTeleporterScreen = new Rect(ModTeleporterScreenStartPositionX, ModTeleporterScreenStartPositionY, ModTeleporterScreenTotalWidth, ModTeleporterScreenTotalHeight);              
             }
             ShowModTeleporterWindow();
@@ -1290,11 +1289,7 @@ namespace ModTeleporter
                             if (ShowModInfo)
                             {
                                 ModInfoBox();
-                            }
-                            else
-                            {
-                                RefreshWindow(150f);
-                            }
+                            }                           
                             MultiplayerOptionBox();
                             ShortcutKeyInfoBox();
                         }
@@ -1524,7 +1519,7 @@ namespace ModTeleporter
                 int _SelectedMapLocationIndex = SelectedMapLocationIndex;
                 if (mapLocationNames != null)
                 {
-                    SelectedMapLocationIndex = GUILayout.SelectionGrid(SelectedMapLocationIndex, mapLocationNames, 3, LocalStylingManager.ColoredSelectedGridButton(_SelectedMapLocationIndex!= SelectedMapLocationIndex));
+                    SelectedMapLocationIndex = GUILayout.SelectionGrid(SelectedMapLocationIndex, mapLocationNames, 3, LocalStylingManager.ColoredSelectedGridButton(_SelectedMapLocationIndex!= SelectedMapLocationIndex), GUILayout.Width(150f));
                     SelectedMapLocationName = mapLocationNames[SelectedMapLocationIndex].Replace(" ", "_");
                 }
             }

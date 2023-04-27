@@ -1,43 +1,43 @@
 <Mod ID="ModTeleporter">
   <Compatible>2.4.2</Compatible>
-  <Button Standard="NumPad6" ID="ModKeybindingId">
+  <Button Standard="NumPad6" ID="ShortcutKey">
     <Name>
-      <EN>ModKeybindingId</EN>
+      <EN>ShortcutKey</EN>
     </Name>
     <Description>
-      <EN>Configurable keybinding for mod screen.</EN>
+      <EN>Configurable ShortcutKey for mod screen.</EN>
     </Description>
   </Button>
-  <Button Standard="D6" ID="ModFastTravelKeybindingId">
+  <Button Standard="D6" ID="FastTravelShortcutKey">
     <Name>
-      <EN>ModFastTravelKeybindingId</EN>
+      <EN>FastTravelShortcutKey</EN>
     </Name>
     <Description>
-      <EN>Configurable keybinding for fast travel.</EN>
+      <EN>Configurable FastTravelShortcutKey for fast travel.</EN>
     </Description>
   </Button>
-  <Button Standard="M" ID="ModShowMapKeybindingId">
+  <Button Standard="M" ID="CustomMapShortcutKey">
     <Name>
-      <EN>ModShowMapKeybindingId</EN>
+      <EN>CustomMapShortcutKey</EN>
     </Name>
     <Description>
-      <EN>Configurable keybinding to show map. Press LeftAlt +</EN>
+      <EN>Configurable CustomMapShortcutKey to show map. Press LeftAlt +</EN>
     </Description>
   </Button>
-  <Button Standard="P" ID="ModShowPlayerGpsInfoKeybindingId">
+  <Button Standard="P" ID="PlayerGpsShortcutKey">
     <Name>
-      <EN>ModShowPlayerGpsInfoKeybindingId</EN>
+      <EN>PlayerGpsShortcutKey</EN>
     </Name>
     <Description>
-      <EN>Configurable keybinding to show player GPS info. Press LeftAlt +</EN>
+      <EN>Configurable PlayerGpsShortcutKey to show player GPS info. Press LeftAlt +</EN>
     </Description>
   </Button>
-  <Button Standard="L" ID="ModLogDebugSpawnerInfoKeybindingId">
+  <Button Standard="L" ID="LogDebugSpawnerInfoShortcutKey">
     <Name>
-      <EN>ModLogDebugSpawnerInfoKeybindingId</EN>
+      <EN>LogDebugSpawnerInfoShortcutKey</EN>
     </Name>
     <Description>
-      <EN>Configurable keybinding to log DebugSpawner info. Press LeftAlt +</EN>
+      <EN>Configurable LogDebugSpawnerInfoShortcutKey to log DebugSpawner info. Press LeftAlt +</EN>
     </Description>
   </Button>
   <Name>
@@ -46,5 +46,5 @@
   <Description>
     <EN>ModTeleporter is a mod for Green Hell that allows a player to teleport to custom-bind or key map locations in sequence or on selection. Pess Alpha7 (default) or the key configurable in ModAPI to open the mod screen.</EN>
   </Description>
-  <Version>1.0.3.6</Version>
+  <Version>1.0.3.7</Version>
 </Mod>

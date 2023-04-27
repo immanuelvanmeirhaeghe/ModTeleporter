@@ -12,7 +12,7 @@ namespace ModTeleporter.Managers
         private static StylingManager Instance;
         private static readonly string ModuleName = nameof(StylingManager);
 
-        public bool IsModEnabled { get; set; } = false;
+        public bool IsModEnabled { get; set; } = true;
 
         public StylingManager()
         {
@@ -36,7 +36,7 @@ namespace ModTeleporter.Managers
         }
 
         protected virtual void InitData()
-        {  }
+        { }
 
         private void HandleException(Exception exc, string methodName)
         {
@@ -45,39 +45,87 @@ namespace ModTeleporter.Managers
             Debug.Log(info);
         }
 
-        private Color DefaultColor = GUI.color;
-        private Color DefaultContentColor = GUI.contentColor;
-        private Color DefaultBackGroundColor = GUI.backgroundColor;
+        public Color DefaultColor = GUI.color;
+        public Color DefaultContentColor = GUI.contentColor;
+        public Color DefaultBackGroundColor = GUI.backgroundColor;
+        public GUIStyle SelectedGridButton = new GUIStyle(GUI.skin.button)
+        {
+            alignment = TextAnchor.MiddleCenter,
+            normal = new GUIStyleState()
+            {
+                textColor = Color.white
+            },
+            onNormal = new GUIStyleState()
+            {
+                textColor = Color.white
+            },
+            active = new GUIStyleState()
+            {
+                textColor = Color.cyan
+            },
+            onActive = new GUIStyleState()
+            {
+                textColor = Color.cyan
+            },
+            focused = new GUIStyleState()
+            {
+                textColor = Color.cyan
+            },
+            onFocused = new GUIStyleState()
+            {
+                textColor = Color.cyan
+            },
+            hover = new GUIStyleState()
+            {
+                textColor = Color.cyan
+            },
+            onHover = new GUIStyleState()
+            {
+                textColor = Color.cyan
+            },
+            wordWrap = true
+        };
+        public GUIStyle WindowBox => new GUIStyle(GUI.skin.box)
+        {
+            stretchWidth = true,
+            stretchHeight = true,
+            wordWrap = true
+        };
         public GUIStyle HeaderLabel => new GUIStyle(GUI.skin.label)
         {
             alignment = TextAnchor.MiddleCenter,
             fontStyle = FontStyle.Bold,
-            fontSize = 16
+            fontSize = 16,
+            stretchWidth = true,
+            wordWrap = true
         };
         public GUIStyle SubHeaderLabel => new GUIStyle(GUI.skin.label)
         {
             alignment = HeaderLabel.alignment,
             fontStyle = HeaderLabel.fontStyle,
             fontSize = HeaderLabel.fontSize - 2,
+            stretchWidth = true,
+            wordWrap = true
         };
         public GUIStyle FormFieldNameLabel => new GUIStyle(GUI.skin.label)
         {
             alignment = TextAnchor.MiddleLeft,
             fontSize = 12,
-            stretchWidth = true
+            stretchWidth = true,
+            wordWrap = true
         };
         public GUIStyle FormFieldValueLabel => new GUIStyle(GUI.skin.label)
         {
             alignment = TextAnchor.MiddleRight,
             fontSize = 12,
-            stretchWidth = true
+            stretchWidth = true,
+            wordWrap = true
         };
         public GUIStyle FormInputTextField => new GUIStyle(GUI.skin.textField)
         {
             alignment = TextAnchor.MiddleRight,
             fontSize = 12,
             stretchWidth = true,
-            stretchHeight = true,
             wordWrap = true
         };
         public GUIStyle CommentLabel => new GUIStyle(GUI.skin.label)
@@ -101,14 +149,12 @@ namespace ModTeleporter.Managers
             fontSize = 12,
             stretchWidth = true
         };
-
         public GUIStyle ColoredToggleValueTextLabel(bool enabled, Color enabledColor, Color disabledColor)
         {
             GUIStyle style = TextLabel;
             style.normal.textColor = enabled ? enabledColor : disabledColor;
             return style;
         }
-
         public GUIStyle ColoredToggleButton(bool activated, Color enabledColor, Color disabledColor)
         {
             GUIStyle style = ToggleButton;
@@ -117,42 +163,36 @@ namespace ModTeleporter.Managers
             style = GUI.skin.button;
             return style;
         }
-
         public GUIStyle ColoredCommentLabel(Color color)
         {
             GUIStyle style = CommentLabel;
             style.normal.textColor = color;
             return style;
         }
-
         public GUIStyle ColoredFieldNameLabel(Color color)
         {
             GUIStyle style = FormFieldNameLabel;
             style.normal.textColor = color;
             return style;
         }
-
         public GUIStyle ColoredFieldValueLabel(Color color)
         {
             GUIStyle style = FormFieldValueLabel;
             style.normal.textColor = color;
             return style;
         }
-
         public GUIStyle ColoredToggleFieldValueLabel(bool enabled, Color enabledColor, Color disabledColor)
         {
             GUIStyle style = FormFieldValueLabel;
             style.normal.textColor = enabled ? enabledColor : disabledColor;
             return style;
         }
-
         public GUIStyle ColoredHeaderLabel(Color color)
         {
             GUIStyle style = HeaderLabel;
             style.normal.textColor = color;
             return style;
         }
-
         public GUIStyle ColoredSubHeaderLabel(Color color)
         {
             GUIStyle style = SubHeaderLabel;
@@ -160,7 +200,7 @@ namespace ModTeleporter.Managers
             return style;
         }
 
-
     }
+
 
 }

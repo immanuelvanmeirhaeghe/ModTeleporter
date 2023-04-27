@@ -29,12 +29,12 @@ namespace ModTeleporter
         private static ModTeleporter Instance;
 
         private static readonly string LogPath = $"{Application.dataPath.Replace("GH_Data", "Logs")}/{nameof(ModTeleporter)}.log";
-        private static readonly string RuntimeConfiguration = Path.Combine(Application.dataPath.Replace("GH_Data", "Mods"), "RuntimeConfiguration.xml");
+        private static readonly string RuntimeConfiguration = Path.Combine(Application.dataPath.Replace("GH_Data", "Mods"), $"{nameof(RuntimeConfiguration)}.xml");
         private static readonly string ModName = nameof(ModTeleporter);
 
-        private static float ModTeleporterScreenTotalWidth { get; set; } = 800f;
+        private static float ModTeleporterScreenTotalWidth { get; set; } = 700f;
         private static float ModTeleporterScreenTotalHeight { get; set; } = 500f;
-        private static float ModTeleporterScreenMinWidth { get; set; } = 800f;
+        private static float ModTeleporterScreenMinWidth { get; set; } = 700f;
         private static float ModTeleporterScreenMaxWidth { get; set; } = Screen.width;
         private static float ModTeleporterScreenMinHeight { get; set; } = 50f;
         private static float ModTeleporterScreenMaxHeight { get; set; } = Screen.height;
@@ -1469,8 +1469,8 @@ namespace ModTeleporter
                     NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
                     GpsCoordinates = MapGpsCoordinates.GetValueOrDefault(NextMapLocation);
 
-                    GUILayout.Label($"Teleport to {SelectedMapLocationName} at (W,S) {LocalToGpsCoordinates(GpsCoordinates)}?", LocalStylingManager.TextLabel);
-                    if (GUILayout.Button("Go", GUI.skin.button, GUILayout.Width(150f)))
+                    GUILayout.Label($"Teleport to {SelectedMapLocationName.ToString().Replace("_", " ")}?", LocalStylingManager.TextLabel);
+                    if (GUILayout.Button($"Go (W,S) {LocalToGpsCoordinates(GpsCoordinates)}", GUI.skin.button, GUILayout.Width(150f)))
                     {
                         OnClickTeleport();
                         CloseWindow();
@@ -1482,12 +1482,13 @@ namespace ModTeleporter
         private void MapLocationsScrollViewBox()
         {
             MapLocationsScrollViewPosition = GUILayout.BeginScrollView(MapLocationsScrollViewPosition, GUI.skin.scrollView, GUILayout.MinHeight(300f));
+            
             using (new GUILayout.VerticalScope(GUI.skin.box))
             {
                 string[] mapLocationNames = GetMapLocationNames();
                 if (mapLocationNames != null)
                 {
-                    SelectedMapLocationIndex = GUILayout.SelectionGrid(SelectedMapLocationIndex, mapLocationNames, 3, GUI.skin.button);
+                    SelectedMapLocationIndex = GUILayout.SelectionGrid(SelectedMapLocationIndex, mapLocationNames, 3, LocalStylingManager.SelectedGridButton);
                     SelectedMapLocationName = mapLocationNames[SelectedMapLocationIndex].Replace(" ", "_");
                 }
             }
@@ -1496,14 +1497,14 @@ namespace ModTeleporter
 
         private void InitConfirmFastTravelScreen(int windowID)
         {
-            using (new GUILayout.VerticalScope(GUI.skin.box))
+            using (new GUILayout.VerticalScope(LocalStylingManager.WindowBox))
             {
-                GUI.color = Color.cyan;
-                GUILayout.Label($"Teleport to {NextMapLocation.ToString().Replace("_", " ")}?", GUI.skin.label);
+                GUI.backgroundColor = LocalStylingManager.DefaultBackGroundColor;
+                GUILayout.Label($"Teleport to {NextMapLocation.ToString().Replace("_", " ")}?", LocalStylingManager.TextLabel);
                 
-                using (var dialogButtonsScope = new GUILayout.HorizontalScope(GUI.skin.box))
+                using (new GUILayout.HorizontalScope(GUI.skin.box))
                 {
-                    if (GUILayout.Button("Yes", GUI.skin.button))
+                    if (GUILayout.Button("Yes", GUI.skin.button, GUILayout.Width(150f)))
                     {
                         GpsCoordinates = MapGpsCoordinates.GetValueOrDefault(NextMapLocation);
                         if (GpsCoordinates != Vector3.zero)
@@ -1517,7 +1518,7 @@ namespace ModTeleporter
 
                         CloseWindow();
                     }
-                    if (GUILayout.Button("No", GUI.skin.button))
+                    if (GUILayout.Button("No", GUI.skin.button, GUILayout.Width(150f)))
                     {
                         CloseWindow();
                     }

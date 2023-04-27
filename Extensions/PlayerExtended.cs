@@ -8,7 +8,7 @@ namespace ModTeleporter.Extensions
         protected override void Start()
         {
             base.Start();
-            new GameObject($"__{nameof(ModTeleporter) }__").AddComponent<ModTeleporter>();
+            new GameObject($"__{nameof(ModTeleporter)}__").AddComponent<ModTeleporter>();
             new GameObject($"__{nameof(StylingManager)}__").AddComponent<StylingManager>();
         }
     }

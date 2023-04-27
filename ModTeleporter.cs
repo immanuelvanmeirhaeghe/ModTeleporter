@@ -32,9 +32,9 @@ namespace ModTeleporter
         private static readonly string RuntimeConfiguration = Path.Combine(Application.dataPath.Replace("GH_Data", "Mods"), $"{nameof(RuntimeConfiguration)}.xml");
         private static readonly string ModName = nameof(ModTeleporter);
 
-        private static float ModTeleporterScreenTotalWidth { get; set; } = 850f;
+        private static float ModTeleporterScreenTotalWidth { get; set; } = 700f;
         private static float ModTeleporterScreenTotalHeight { get; set; } = 600f;
-        private static float ModTeleporterScreenMinWidth { get; set; } = 850f;
+        private static float ModTeleporterScreenMinWidth { get; set; } = 700f;
         private static float ModTeleporterScreenMaxWidth { get; set; } = Screen.width;
         private static float ModTeleporterScreenMinHeight { get; set; } = 50f;
         private static float ModTeleporterScreenMaxHeight { get; set; } = Screen.height;

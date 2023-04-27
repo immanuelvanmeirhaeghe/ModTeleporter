@@ -48,7 +48,7 @@ namespace ModTeleporter.Managers
         public Color DefaultColor = GUI.color;
         public Color DefaultContentColor = GUI.contentColor;
         public Color DefaultBackGroundColor = GUI.backgroundColor;
-        public GUIStyle SelectedGridButton = new GUIStyle(GUI.skin.button)
+        public GUIStyle SelectedGridButton => new GUIStyle(GUI.skin.button)
         {
             alignment = TextAnchor.MiddleCenter,
             normal = new GUIStyleState()
@@ -201,6 +201,5 @@ namespace ModTeleporter.Managers
         }
 
     }
-
 
 }

@@ -57,8 +57,9 @@ namespace ModTeleporter.Managers
             clipping = GUI.skin.button.clipping,
             margin = GUI.skin.button.margin,
             padding = GUI.skin.button.padding,
-            contentOffset = GUI.skin.button.contentOffset,          
-            wordWrap = true
+            contentOffset = GUI.skin.button.contentOffset,
+            wordWrap = true,
+            fixedWidth = 80f
         };
         public GUIStyle WindowBox => new GUIStyle(GUI.skin.box)
         {
@@ -142,7 +143,13 @@ namespace ModTeleporter.Managers
         {
             GUIStyle style = SelectedGridButton;
             style.normal.textColor = isSelectedIndex ? Color.cyan : DefaultColor;
-            style.onNormal.textColor = isSelectedIndex ? Color.cyan : DefaultColor;            
+            style.onNormal.textColor = isSelectedIndex ? Color.cyan : DefaultColor;
+            style.active.textColor = isSelectedIndex ? Color.cyan : DefaultColor;
+            style.onActive.textColor = isSelectedIndex ? Color.cyan : DefaultColor;
+            style.hover.textColor = isSelectedIndex ? Color.cyan : DefaultColor;
+            style.onHover.textColor = isSelectedIndex ? Color.cyan : DefaultColor;
+            style.focused.textColor = isSelectedIndex ? Color.cyan : DefaultColor;
+            style.onFocused.textColor = isSelectedIndex ? Color.cyan : DefaultColor;
             return style;
         }
         public GUIStyle ColoredCommentLabel(Color color)

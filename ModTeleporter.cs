@@ -1094,7 +1094,7 @@ namespace ModTeleporter
             switch (controlId)
             {
                 case 0:
-                    ShowModTeleporterScreen = !ShowModTeleporterScreen;
+                    ShowModTeleporterScreen = !ShowModTeleporterScreen;                  
                     return;
                 case 1:
                     ShowFastTravelScreen = !ShowFastTravelScreen;
@@ -1223,6 +1223,25 @@ namespace ModTeleporter
             ShowModTeleporterWindow();
         }
 
+        private void RefreshWindow(float deltaHeight)
+        {
+            ModTeleporterScreenStartPositionX = ModTeleporterScreen.x;
+            ModTeleporterScreenStartPositionY = ModTeleporterScreen.y;
+            ModTeleporterScreenTotalWidth = ModTeleporterScreen.width;
+
+            if (IsModTeleporterScreenMinimized)
+            {
+                ModTeleporterScreen = new Rect(ModTeleporterScreenStartPositionX, ModTeleporterScreenStartPositionY, ModTeleporterScreenTotalWidth, ModTeleporterScreenMinHeight);             
+            }
+            else
+            {
+                ModTeleporterScreenTotalHeight = ModTeleporterScreen.height - deltaHeight;
+
+                ModTeleporterScreen = new Rect(ModTeleporterScreenStartPositionX, ModTeleporterScreenStartPositionY, ModTeleporterScreenTotalWidth, ModTeleporterScreenTotalHeight);              
+            }
+            ShowModTeleporterWindow();
+        }
+
         private void CloseWindow()
         {
             ShowFastTravelScreen = false;
@@ -1235,6 +1254,7 @@ namespace ModTeleporter
         {
             ModTeleporterScreenStartPositionX = ModTeleporterScreen.x;
             ModTeleporterScreenStartPositionY = ModTeleporterScreen.y;
+            ModTeleporterScreenTotalWidth = ModTeleporterScreen.width;
 
             using (new GUILayout.VerticalScope(GUI.skin.box))
             {
@@ -1243,8 +1263,8 @@ namespace ModTeleporter
                 if (!IsModTeleporterScreenMinimized)
                 {
                     ModTeleporterManagerBox();
-                    CustomMapLocationBox();
-                    MapLocationsBox();
+                    CustomMapLocationManagerBox();
+                    MapLocationsManagerBox();
                 }
             }
             GUI.DragWindow(new Rect(0f, 0f, 10000f, 10000f));
@@ -1259,7 +1279,6 @@ namespace ModTeleporter
                     using (new GUILayout.VerticalScope(GUI.skin.box))
                     {
                         GUILayout.Label($"{ModName} Manager", LocalStylingManager.ColoredHeaderLabel(Color.yellow));
-
                         GUILayout.Label($"{ModName} Options", LocalStylingManager.ColoredSubHeaderLabel(Color.yellow));
 
                         using (new GUILayout.VerticalScope(GUI.skin.box))
@@ -1271,6 +1290,10 @@ namespace ModTeleporter
                             if (ShowModInfo)
                             {
                                 ModInfoBox();
+                            }
+                            else
+                            {
+                                RefreshWindow(150f);
                             }
                             MultiplayerOptionBox();
                             ShortcutKeyInfoBox();
@@ -1296,37 +1319,36 @@ namespace ModTeleporter
 
                 GUILayout.Label("Mod Info", LocalStylingManager.ColoredSubHeaderLabel(Color.cyan));
 
-                using (var gidScope = new GUILayout.HorizontalScope(GUI.skin.box))
+                using (new GUILayout.HorizontalScope(GUI.skin.box))
                 {
                     GUILayout.Label($"{nameof(IConfigurableMod.GameID)}:", LocalStylingManager.FormFieldNameLabel);
                     GUILayout.Label($"{SelectedMod.GameID}", LocalStylingManager.FormFieldValueLabel);
                 }
-                using (var midScope = new GUILayout.HorizontalScope(GUI.skin.box))
+                using (new GUILayout.HorizontalScope(GUI.skin.box))
                 {
                     GUILayout.Label($"{nameof(IConfigurableMod.ID)}:", LocalStylingManager.FormFieldNameLabel);
                     GUILayout.Label($"{SelectedMod.ID}", LocalStylingManager.FormFieldValueLabel);
                 }
-                using (var uidScope = new GUILayout.HorizontalScope(GUI.skin.box))
+                using (new GUILayout.HorizontalScope(GUI.skin.box))
                 {
                     GUILayout.Label($"{nameof(IConfigurableMod.UniqueID)}:", LocalStylingManager.FormFieldNameLabel);
                     GUILayout.Label($"{SelectedMod.UniqueID}", LocalStylingManager.FormFieldValueLabel);
                 }
-                using (var versionScope = new GUILayout.HorizontalScope(GUI.skin.box))
+                using (new GUILayout.HorizontalScope(GUI.skin.box))
                 {
                     GUILayout.Label($"{nameof(IConfigurableMod.Version)}:", LocalStylingManager.FormFieldNameLabel);
                     GUILayout.Label($"{SelectedMod.Version}", LocalStylingManager.FormFieldValueLabel);
                 }
 
                 GUILayout.Label("Buttons Info", LocalStylingManager.ColoredSubHeaderLabel(Color.cyan));
-
                 foreach (var configurableModButton in SelectedMod.ConfigurableModButtons)
                 {
-                    using (var btnidScope = new GUILayout.HorizontalScope(GUI.skin.box))
+                    using (new GUILayout.HorizontalScope(GUI.skin.box))
                     {
                         GUILayout.Label($"{nameof(IConfigurableModButton.ID)}:", LocalStylingManager.FormFieldNameLabel);
                         GUILayout.Label($"{configurableModButton.ID}", LocalStylingManager.FormFieldValueLabel);
                     }
-                    using (var btnbindScope = new GUILayout.HorizontalScope(GUI.skin.box))
+                    using (new GUILayout.HorizontalScope(GUI.skin.box))
                     {
                         GUILayout.Label($"{nameof(IConfigurableModButton.KeyBinding)}:", LocalStylingManager.FormFieldNameLabel);
                         GUILayout.Label($"{configurableModButton.KeyBinding}", LocalStylingManager.FormFieldValueLabel);
@@ -1416,10 +1438,14 @@ namespace ModTeleporter
             }
         }
 
-        private void CustomMapLocationBox()
+        private void CustomMapLocationManagerBox()
         {
             using (new GUILayout.VerticalScope(GUI.skin.box))
             {
+                GUILayout.Label($"Custom map location Manager", LocalStylingManager.ColoredHeaderLabel(Color.yellow));
+
+                GUILayout.Label($"Custom map location Options", LocalStylingManager.ColoredSubHeaderLabel(Color.yellow));
+
                 using (new GUILayout.HorizontalScope(GUI.skin.box))
                 {
                     GUILayout.Label($"Current custom map location set to GPS coordinates (W,S): {LocalToGpsCoordinates(CustomGpsCoordinates)}:", LocalStylingManager.ColoredFieldNameLabel(Color.cyan));
@@ -1454,10 +1480,14 @@ namespace ModTeleporter
             }
         }
 
-        private void MapLocationsBox()
+        private void MapLocationsManagerBox()
         {
             using (new GUILayout.VerticalScope(GUI.skin.box))
             {
+                GUILayout.Label($"Map locations Manager", LocalStylingManager.ColoredHeaderLabel(Color.yellow));
+
+                GUILayout.Label($"Map locations Options", LocalStylingManager.ColoredSubHeaderLabel(Color.yellow));
+
                 using (new GUILayout.HorizontalScope(GUI.skin.box))
                 {
                     GUILayout.Label($"Last map location teleported to:", LocalStylingManager.ColoredFieldNameLabel(Color.cyan));
@@ -1494,7 +1524,7 @@ namespace ModTeleporter
                 int _SelectedMapLocationIndex = SelectedMapLocationIndex;
                 if (mapLocationNames != null)
                 {
-                    SelectedMapLocationIndex = GUILayout.SelectionGrid(SelectedMapLocationIndex, mapLocationNames, 3, LocalStylingManager.ColoredSelectedGridButton(_SelectedMapLocationIndex== SelectedMapLocationIndex));
+                    SelectedMapLocationIndex = GUILayout.SelectionGrid(SelectedMapLocationIndex, mapLocationNames, 3, LocalStylingManager.ColoredSelectedGridButton(_SelectedMapLocationIndex!= SelectedMapLocationIndex));
                     SelectedMapLocationName = mapLocationNames[SelectedMapLocationIndex].Replace(" ", "_");
                 }
             }

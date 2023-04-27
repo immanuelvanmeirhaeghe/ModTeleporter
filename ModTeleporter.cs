@@ -32,15 +32,15 @@ namespace ModTeleporter
         private static readonly string RuntimeConfiguration = Path.Combine(Application.dataPath.Replace("GH_Data", "Mods"), $"{nameof(RuntimeConfiguration)}.xml");
         private static readonly string ModName = nameof(ModTeleporter);
 
-        private static float ModTeleporterScreenTotalWidth { get; set; } = 800f;
+        private static float ModTeleporterScreenTotalWidth { get; set; } = 850f;
         private static float ModTeleporterScreenTotalHeight { get; set; } = 600f;
-        private static float ModTeleporterScreenMinWidth { get; set; } = 800f;
+        private static float ModTeleporterScreenMinWidth { get; set; } = 850f;
         private static float ModTeleporterScreenMaxWidth { get; set; } = Screen.width;
         private static float ModTeleporterScreenMinHeight { get; set; } = 50f;
         private static float ModTeleporterScreenMaxHeight { get; set; } = Screen.height;
         private static float ModTeleporterScreenStartPositionX { get; set; } = Screen.width / 2f;
         private static float ModTeleporterScreenStartPositionY { get; set; } = Screen.height / 2f;
-        private static bool IsModTeleporterMinimized { get; set; } = false;
+        private static bool IsModTeleporterScreenMinimized { get; set; } = false;
         private static int ModTeleporterScreenId { get; set; }
 
         private static float ConfirmFastTravelScreenTotalWidth { get; set; } = 400f;
@@ -1133,7 +1133,7 @@ namespace ModTeleporter
                 InitData();
                 InitMapLocations();
                 InitSkinUI();
-                ShowTeleporterWindow();
+                ShowModTeleporterWindow();
             }
         }
 
@@ -1172,9 +1172,9 @@ namespace ModTeleporter
             ConfirmFastTravelScreen = GUILayout.Window(GetHashCode(), ConfirmFastTravelScreen, InitConfirmFastTravelScreen, " Fast travel?", GUI.skin.window);
         }
 
-        private void ShowTeleporterWindow()
+        private void ShowModTeleporterWindow()
         {
-            if (ModTeleporterScreenId < 0)
+            if (ModTeleporterScreenId <= 0)
             {
                 ModTeleporterScreenId = GetHashCode();
             }
@@ -1196,7 +1196,7 @@ namespace ModTeleporter
 
         private void ScreenMenuBox()
         {
-            string CollapseButtonText = IsModTeleporterMinimized ? "O" : "-";
+            string CollapseButtonText = IsModTeleporterScreenMinimized ? "O" : "-";
             if (GUI.Button(new Rect(ModTeleporterScreen.width - 40f, 0f, 20f, 20f), CollapseButtonText, GUI.skin.button))
             {
                 CollapseWindow();
@@ -1210,21 +1210,17 @@ namespace ModTeleporter
 
         private void CollapseWindow()
         {
-            ModTeleporterScreenStartPositionX = ModTeleporterScreen.x;
-            ModTeleporterScreenStartPositionY = ModTeleporterScreen.y;
-            ModTeleporterScreenTotalWidth = ModTeleporterScreen.width;
-
-            if (!IsModTeleporterMinimized)
+            if (!IsModTeleporterScreenMinimized)
             {
                 ModTeleporterScreen = new Rect(ModTeleporterScreenStartPositionX, ModTeleporterScreenStartPositionY, ModTeleporterScreenTotalWidth, ModTeleporterScreenMinHeight);
-                IsModTeleporterMinimized = true;
+                IsModTeleporterScreenMinimized = true;
             }
             else
             {
                 ModTeleporterScreen = new Rect(ModTeleporterScreenStartPositionX, ModTeleporterScreenStartPositionY, ModTeleporterScreenTotalWidth, ModTeleporterScreenTotalHeight);
-                IsModTeleporterMinimized = false;
+                IsModTeleporterScreenMinimized = false;
             }
-            ShowTeleporterWindow();
+            ShowModTeleporterWindow();
         }
 
         private void CloseWindow()
@@ -1243,7 +1239,8 @@ namespace ModTeleporter
             using (new GUILayout.VerticalScope(GUI.skin.box))
             {
                 ScreenMenuBox();
-                if (!IsModTeleporterMinimized)
+
+                if (!IsModTeleporterScreenMinimized)
                 {
                     ModTeleporterManagerBox();
                     CustomMapLocationBox();
@@ -1255,32 +1252,39 @@ namespace ModTeleporter
 
         private void ModTeleporterManagerBox()
         {
-            if (IsModActiveForSingleplayer || IsModActiveForMultiplayer)
+            try
             {
-                using (new GUILayout.VerticalScope(GUI.skin.box))
+                if (IsModActiveForSingleplayer || IsModActiveForMultiplayer)
                 {
-                    GUILayout.Label($"{ModName} Manager", LocalStylingManager.ColoredHeaderLabel(Color.yellow));
-
-                    GUILayout.Label($"{ModName} Options", LocalStylingManager.ColoredSubHeaderLabel(Color.yellow));
-
                     using (new GUILayout.VerticalScope(GUI.skin.box))
                     {
-                        if (GUILayout.Button($"Mod Info", GUI.skin.button))
+                        GUILayout.Label($"{ModName} Manager", LocalStylingManager.ColoredHeaderLabel(Color.yellow));
+
+                        GUILayout.Label($"{ModName} Options", LocalStylingManager.ColoredSubHeaderLabel(Color.yellow));
+
+                        using (new GUILayout.VerticalScope(GUI.skin.box))
                         {
-                            ToggleShowUI(3);
+                            if (GUILayout.Button($"Mod Info", GUI.skin.button))
+                            {
+                                ToggleShowUI(3);
+                            }
+                            if (ShowModInfo)
+                            {
+                                ModInfoBox();
+                            }
+                            MultiplayerOptionBox();
+                            ShortcutKeyInfoBox();
                         }
-                        if (ShowModInfo)
-                        {
-                            ModInfoBox();
-                        }
-                        MultiplayerOptionBox();
-                        ShortcutKeyInfoBox();
                     }
                 }
+                else
+                {
+                    OnlyForSingleplayerOrWhenHostBox();
+                }
             }
-            else
+            catch (Exception exc)
             {
-                OnlyForSingleplayerOrWhenHostBox();
+                HandleException(exc, nameof(ModTeleporterManagerBox));
             }
         }
 
@@ -1339,8 +1343,9 @@ namespace ModTeleporter
             {
                 using (new GUILayout.VerticalScope(GUI.skin.box))
                 {
+                    GUILayout.Label("Multiplayer Options", LocalStylingManager.ColoredSubHeaderLabel(Color.yellow));
+
                     string multiplayerOptionMessage = string.Empty;
-                    GUILayout.Label("Multiplayer Info", LocalStylingManager.ColoredSubHeaderLabel(Color.cyan));
                     if (IsModActiveForSingleplayer || IsModActiveForMultiplayer)
                     {
                         if (IsModActiveForSingleplayer)
@@ -1351,7 +1356,7 @@ namespace ModTeleporter
                         {
                             multiplayerOptionMessage = $"the game host allowed usage";
                         }
-                        GUILayout.Label($"{PermissionChangedMessage($"granted", multiplayerOptionMessage)}", LocalStylingManager.ColoredToggleValueTextLabel(true, Color.green, Color.yellow));
+                        GUILayout.Label(PermissionChangedMessage($"granted", multiplayerOptionMessage), LocalStylingManager.ColoredFieldValueLabel(Color.green));
                     }
                     else
                     {
@@ -1363,7 +1368,7 @@ namespace ModTeleporter
                         {
                             multiplayerOptionMessage = $"the game host did not allow usage";
                         }
-                        GUILayout.Label($"{PermissionChangedMessage($"revoked", multiplayerOptionMessage)}", LocalStylingManager.ColoredToggleValueTextLabel(false, Color.green, Color.yellow));
+                        GUILayout.Label(PermissionChangedMessage($"revoked", $"{multiplayerOptionMessage}"), LocalStylingManager.ColoredFieldValueLabel(Color.yellow));
                     }
                 }
             }

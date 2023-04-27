@@ -51,38 +51,13 @@ namespace ModTeleporter.Managers
         public GUIStyle SelectedGridButton => new GUIStyle(GUI.skin.button)
         {
             alignment = TextAnchor.MiddleCenter,
-            normal = new GUIStyleState()
-            {
-                textColor = Color.white
-            },
-            onNormal = new GUIStyleState()
-            {
-                textColor = Color.white
-            },
-            active = new GUIStyleState()
-            {
-                textColor = Color.cyan
-            },
-            onActive = new GUIStyleState()
-            {
-                textColor = Color.cyan
-            },
-            focused = new GUIStyleState()
-            {
-                textColor = Color.cyan
-            },
-            onFocused = new GUIStyleState()
-            {
-                textColor = Color.cyan
-            },
-            hover = new GUIStyleState()
-            {
-                textColor = Color.cyan
-            },
-            onHover = new GUIStyleState()
-            {
-                textColor = Color.cyan
-            },
+            fontSize = GUI.skin.button.fontSize,
+            border = GUI.skin.button.border,
+            font = GUI.skin.button.font,
+            clipping = GUI.skin.button.clipping,
+            margin = GUI.skin.button.margin,
+            padding = GUI.skin.button.padding,
+            contentOffset = GUI.skin.button.contentOffset,          
             wordWrap = true
         };
         public GUIStyle WindowBox => new GUIStyle(GUI.skin.box)
@@ -158,9 +133,16 @@ namespace ModTeleporter.Managers
         public GUIStyle ColoredToggleButton(bool activated, Color enabledColor, Color disabledColor)
         {
             GUIStyle style = ToggleButton;
-            style.active.textColor = activated ? enabledColor : disabledColor;
-            style.onActive.textColor = activated ? enabledColor : disabledColor;
+            style.normal.textColor = activated ? enabledColor : disabledColor;
+            style.onNormal.textColor = activated ? enabledColor : disabledColor;
             style = GUI.skin.button;
+            return style;
+        }
+        public GUIStyle ColoredSelectedGridButton(bool isSelectedIndex)
+        {
+            GUIStyle style = SelectedGridButton;
+            style.normal.textColor = isSelectedIndex ? Color.cyan : DefaultColor;
+            style.onNormal.textColor = isSelectedIndex ? Color.cyan : DefaultColor;            
             return style;
         }
         public GUIStyle ColoredCommentLabel(Color color)

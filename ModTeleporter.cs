@@ -1491,9 +1491,10 @@ namespace ModTeleporter
             using (new GUILayout.VerticalScope(GUI.skin.box))
             {
                 string[] mapLocationNames = GetMapLocationNames();
+                int _SelectedMapLocationIndex = SelectedMapLocationIndex;
                 if (mapLocationNames != null)
                 {
-                    SelectedMapLocationIndex = GUILayout.SelectionGrid(SelectedMapLocationIndex, mapLocationNames, 3, LocalStylingManager.SelectedGridButton);
+                    SelectedMapLocationIndex = GUILayout.SelectionGrid(SelectedMapLocationIndex, mapLocationNames, 3, LocalStylingManager.ColoredSelectedGridButton(_SelectedMapLocationIndex== SelectedMapLocationIndex));
                     SelectedMapLocationName = mapLocationNames[SelectedMapLocationIndex].Replace(" ", "_");
                 }
             }

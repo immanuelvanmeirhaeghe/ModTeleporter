@@ -29,7 +29,7 @@ namespace ModTeleporter
         private static ModTeleporter Instance;
 
         private static readonly string LogPath = $"{Application.dataPath.Replace("GH_Data", "Logs")}/{nameof(ModTeleporter)}.log";
-        private static readonly string RuntimeConfiguration = Path.Combine(Application.dataPath.Replace("GH_Data", "Mods"), $"{nameof(RuntimeConfiguration)}.xml");
+        private static readonly string RuntimeConfigurationFile = Path.Combine(Application.dataPath.Replace("GH_Data", "Mods"), "RuntimeConfiguration.xml");
         private static readonly string ModName = nameof(ModTeleporter);
 
         private static float ModTeleporterScreenTotalWidth { get; set; } = 700f;
@@ -140,89 +140,50 @@ namespace ModTeleporter
             }
         }
 
-        public KeyCode GetShortcutKey(string buttonID)
+        private KeyCode GetConfigurableKey(string buttonId)
         {
-            var ConfigurableModList = GetModList();
-            if (ConfigurableModList != null && ConfigurableModList.Count > 0)
-            {
-                SelectedMod = ConfigurableModList.Find(cfgMod => cfgMod.ID == ModName);
-                return SelectedMod.ConfigurableModButtons.Find(cfgButton => cfgButton.ID == buttonID).ShortcutKey;
-            }
-            else
-            {
-                switch (buttonID)
-                {
-                    case nameof(ShortcutKey):
-                        return KeyCode.Keypad6;
-                    case nameof(FastTravelShortcutKey):
-                        return KeyCode.Alpha6;
-                    case nameof(CustomMapShortcutKey):
-                        return KeyCode.M;
-                    case nameof(PlayerGpsShortcutKey):
-                        return KeyCode.P;
-                    case nameof(LogDebugSpawnerInfoShortcutKey):
-                        return KeyCode.L;
-                    default:
-                        return KeyCode.None;
-                }
-            }
-        }
+            KeyCode configuredKeyCode = default;
+            string configuredKeybinding = string.Empty;
 
-        private List<IConfigurableMod> GetModList()
-        {
-            List<IConfigurableMod> modList = new List<IConfigurableMod>();
             try
             {
-                if (File.Exists(RuntimeConfiguration))
+                if (File.Exists(RuntimeConfigurationFile))
                 {
-                    using (XmlReader configFileReader = XmlReader.Create(new StreamReader(RuntimeConfiguration)))
+                    using (var xmlReader = XmlReader.Create(new StreamReader(RuntimeConfigurationFile)))
                     {
-                        while (configFileReader.Read())
+                        while (xmlReader.Read())
                         {
-                            configFileReader.ReadToFollowing("Mod");
-                            do
+                            if (xmlReader["ID"] == ModName)
                             {
-                                string gameID = GameID.GreenHell.ToString();
-                                string modID = configFileReader.GetAttribute(nameof(IConfigurableMod.ID));
-                                string uniqueID = configFileReader.GetAttribute(nameof(IConfigurableMod.UniqueID));
-                                string version = configFileReader.GetAttribute(nameof(IConfigurableMod.Version));
-
-                                var configurableMod = new ConfigurableMod(gameID, modID, uniqueID, version);
-
-                                configFileReader.ReadToDescendant("Button");
-                                do
+                                if (xmlReader.ReadToFollowing(nameof(Button)) && xmlReader["ID"] == buttonId)
                                 {
-                                    string buttonID = configFileReader.GetAttribute(nameof(IConfigurableModButton.ID));
-                                    string buttonKeyBinding = configFileReader.ReadElementContentAsString();
-
-                                    configurableMod.AddConfigurableModButton(buttonID, buttonKeyBinding);
-
-                                } while (configFileReader.ReadToNextSibling("Button"));
-
-                                if (!modList.Contains(configurableMod))
-                                {
-                                    modList.Add(configurableMod);
+                                    configuredKeybinding = xmlReader.ReadElementContentAsString();
                                 }
-
-                            } while (configFileReader.ReadToNextSibling("Mod"));
+                            }
                         }
                     }
                 }
-                return modList;
+
+                configuredKeybinding = configuredKeybinding?.Replace("NumPad", "Keypad").Replace("Oem", "");
+
+                configuredKeyCode = (KeyCode)(!string.IsNullOrEmpty(configuredKeybinding)
+                                                            ? Enum.Parse(typeof(KeyCode), configuredKeybinding)
+                                                            : GetType().GetProperty(buttonId)?.GetValue(this));
+                return configuredKeyCode;
             }
             catch (Exception exc)
             {
-                HandleException(exc, nameof(GetModList));
-                modList = new List<IConfigurableMod>();
-                return modList;
+                HandleException(exc, nameof(GetConfigurableKey));
+                configuredKeyCode = (KeyCode)(GetType().GetProperty(buttonId)?.GetValue(this));
+                return configuredKeyCode;
             }
         }
 
         private void HandleException(Exception exc, string methodName)
         {
-            string info = $"[{ModName}:{methodName}] throws exception -  {exc.TargetSite?.Name}:\n{exc.Message}\n{exc.InnerException}\n{exc.Source}\n{exc.StackTrace}";
+            string info = $"[{ModName}:{methodName}] throws exception:\n{exc}";
             ModAPI.Log.Write(info);
-            Debug.Log(info);        
+            ShowHUDBigInfo(HUDBigInfoMessage(exc.Message, MessageType.Error, Color.red));
         }
 
         private void ModManager_onPermissionValueChanged(bool optionValue)
@@ -855,11 +816,11 @@ namespace ModTeleporter
                 LocalMapLocationMarkerTexture = markert;
             }, LocalMapLocationMarkerTextureUrl));
 
-            ShortcutKey = GetShortcutKey(nameof(ShortcutKey));
-            FastTravelShortcutKey = GetShortcutKey(nameof(FastTravelShortcutKey));
-            CustomMapShortcutKey = GetShortcutKey(nameof(CustomMapShortcutKey));
-            PlayerGpsShortcutKey = GetShortcutKey(nameof(PlayerGpsShortcutKey));
-            LogDebugSpawnerInfoShortcutKey = GetShortcutKey(nameof(LogDebugSpawnerInfoShortcutKey));
+            ShortcutKey = GetConfigurableKey(nameof(ShortcutKey));
+            FastTravelShortcutKey = GetConfigurableKey(nameof(FastTravelShortcutKey));
+            CustomMapShortcutKey = GetConfigurableKey(nameof(CustomMapShortcutKey));
+            PlayerGpsShortcutKey = GetConfigurableKey(nameof(PlayerGpsShortcutKey));
+            LogDebugSpawnerInfoShortcutKey = GetConfigurableKey(nameof(LogDebugSpawnerInfoShortcutKey));
         }
 
         private IEnumerator LoadTexture(Action<Texture2D> action, string url)
@@ -996,48 +957,60 @@ namespace ModTeleporter
             }
         }
 
-        public void ShowHUDInfoLog(string itemID, string localizedTextKey)
-        {
-            Localization localization = GreenHellGame.Instance.GetLocalization();
-            ((HUDMessages)LocalHUDManager.GetHUD(typeof(HUDMessages))).AddMessage(localization.Get(localizedTextKey) + "  " + localization.Get(itemID));
-        }
-
-        public void ShowHUDBigInfo(string text)
+        private void ShowHUDBigInfo(string text)
         {
             string header = $"{ModName} Info";
             string textureName = HUDInfoLogTextureType.Count.ToString();
-            HUDBigInfo hudBigInfo = (HUDBigInfo)LocalHUDManager.GetHUD(typeof(HUDBigInfo));
+
+            HUDBigInfo bigInfo = (HUDBigInfo)LocalHUDManager.GetHUD(typeof(HUDBigInfo));
             HUDBigInfoData.s_Duration = 2f;
-            HUDBigInfoData hudBigInfoData = new HUDBigInfoData
+            HUDBigInfoData bigInfoData = new HUDBigInfoData
             {
                 m_Header = header,
                 m_Text = text,
                 m_TextureName = textureName,
                 m_ShowTime = Time.time
             };
-            hudBigInfo.AddInfo(hudBigInfoData);
-            hudBigInfo.Show(true);
+            bigInfo.AddInfo(bigInfoData);
+            bigInfo.Show(true);
+        }
+
+        public void ShowHUDInfoLog(string itemID, string localizedTextKey)
+        {
+            Localization localization = GreenHellGame.Instance.GetLocalization();
+            var messages = ((HUDMessages)LocalHUDManager.GetHUD(typeof(HUDMessages)));
+            messages.AddMessage($"{localization.Get(localizedTextKey)}  {localization.Get(itemID)}");
+        }
+
+        protected virtual void Awake()
+        {
+            Instance = this;
+        }
+
+        protected virtual void OnDestroy()
+        {
+            Instance = null;
         }
 
         protected virtual void Update()
         {
-            if (Input.GetKeyDown(ShortcutKey))
-            {
-                if (!ShowModTeleporterScreen)
-                {
-                    InitData();
-                    InitMapLocations();
-                    EnableCursor(true);
-                }
-                ToggleShowUI(0);
-                if (!ShowModTeleporterScreen)
-                {
-                    EnableCursor(false);
-                }
-            }
-
             if (IsModActiveForSingleplayer || IsModActiveForMultiplayer)
             {
+                if (Input.GetKeyDown(ShortcutKey))
+                {
+                    if (!ShowModTeleporterScreen)
+                    {
+                        InitData();
+                        InitMapLocations();
+                        EnableCursor(true);
+                    }
+                    ToggleShowUI(0);
+                    if (!ShowModTeleporterScreen)
+                    {
+                        EnableCursor(false);
+                    }
+                }
+
                 if (!GameMapsUnlocked)
                 {
                     InitData();
@@ -1174,10 +1147,7 @@ namespace ModTeleporter
 
         private void ShowModTeleporterWindow()
         {
-            if (ModTeleporterScreenId <= 0)
-            {
-                ModTeleporterScreenId = GetHashCode();
-            }
+            ModTeleporterScreenId = GetHashCode();
             string modTeleporterScreenTitle = $"{ModName} created by [Dragon Legion] Immaanuel#4300";
 
             CurrentMapLocation = LastMapLocationTeleportedTo;

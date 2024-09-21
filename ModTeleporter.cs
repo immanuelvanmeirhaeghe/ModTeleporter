@@ -31,6 +31,7 @@ namespace ModTeleporter
         private static readonly string LogPath = $"{Application.dataPath.Replace("GH_Data", "Logs")}/{nameof(ModTeleporter)}.log";
         private static readonly string RuntimeConfigurationFile = Path.Combine(Application.dataPath.Replace("GH_Data", "Mods"), "RuntimeConfiguration.xml");
         private static readonly string ModName = nameof(ModTeleporter);
+        public string ModTeleporterScreenTitle = $"{ModName} created by [Dragon Legion] Immaanuel#4300";
 
         private static float ModTeleporterScreenTotalWidth { get; set; } = 700f;
         private static float ModTeleporterScreenTotalHeight { get; set; } = 600f;
@@ -140,42 +141,67 @@ namespace ModTeleporter
             }
         }
 
-        private KeyCode GetConfigurableKey(string buttonId)
+        public KeyCode GetShortcutKey(string buttonID)
         {
-            KeyCode configuredKeyCode = default;
-            string configuredKeybinding = string.Empty;
+            var ConfigurableModList = GetModList();
+            if (ConfigurableModList != null && ConfigurableModList.Count > 0)
+            {
+                SelectedMod = ConfigurableModList.Find(cfgMod => cfgMod.ID == ModName);
+                return SelectedMod.ConfigurableModButtons.Find(cfgButton => cfgButton.ID == buttonID).ShortcutKey;
+            }
+            else
+            {
+                return KeyCode.Keypad8;
+            }
+        }
 
+        private List<IConfigurableMod> GetModList()
+        {
+            List<IConfigurableMod> modList = new List<IConfigurableMod>();
             try
             {
                 if (File.Exists(RuntimeConfigurationFile))
                 {
-                    using (var xmlReader = XmlReader.Create(new StreamReader(RuntimeConfigurationFile)))
+                    using (XmlReader configFileReader = XmlReader.Create(new StreamReader(RuntimeConfigurationFile)))
                     {
-                        while (xmlReader.Read())
+                        while (configFileReader.Read())
                         {
-                            if (xmlReader["ID"] == ModName)
+                            configFileReader.ReadToFollowing("Mod");
+                            do
                             {
-                                if (xmlReader.ReadToFollowing(nameof(Button)) && xmlReader["ID"] == buttonId)
+                                string gameID = GameID.GreenHell.ToString();
+                                string modID = configFileReader.GetAttribute(nameof(IConfigurableMod.ID));
+                                string uniqueID = configFileReader.GetAttribute(nameof(IConfigurableMod.UniqueID));
+                                string version = configFileReader.GetAttribute(nameof(IConfigurableMod.Version));
+
+                                var configurableMod = new ConfigurableMod(gameID, modID, uniqueID, version);
+
+                                configFileReader.ReadToDescendant("Button");
+                                do
                                 {
-                                    configuredKeybinding = xmlReader.ReadElementContentAsString();
+                                    string buttonID = configFileReader.GetAttribute(nameof(IConfigurableModButton.ID));
+                                    string buttonKeyBinding = configFileReader.ReadElementContentAsString();
+
+                                    configurableMod.AddConfigurableModButton(buttonID, buttonKeyBinding);
+
+                                } while (configFileReader.ReadToNextSibling("Button"));
+
+                                if (!modList.Contains(configurableMod))
+                                {
+                                    modList.Add(configurableMod);
                                 }
-                            }
+
+                            } while (configFileReader.ReadToNextSibling("Mod"));
                         }
                     }
                 }
-
-                configuredKeybinding = configuredKeybinding?.Replace("NumPad", "Keypad").Replace("Oem", "");
-
-                configuredKeyCode = (KeyCode)(!string.IsNullOrEmpty(configuredKeybinding)
-                                                            ? Enum.Parse(typeof(KeyCode), configuredKeybinding)
-                                                            : GetType().GetProperty(buttonId)?.GetValue(this));
-                return configuredKeyCode;
+                return modList;
             }
             catch (Exception exc)
             {
-                HandleException(exc, nameof(GetConfigurableKey));
-                configuredKeyCode = (KeyCode)(GetType().GetProperty(buttonId)?.GetValue(this));
-                return configuredKeyCode;
+                HandleException(exc, nameof(GetModList));
+                modList = new List<IConfigurableMod>();
+                return modList;
             }
         }
 
@@ -815,12 +841,12 @@ namespace ModTeleporter
             {
                 LocalMapLocationMarkerTexture = markert;
             }, LocalMapLocationMarkerTextureUrl));
-
-            ShortcutKey = GetConfigurableKey(nameof(ShortcutKey));
-            FastTravelShortcutKey = GetConfigurableKey(nameof(FastTravelShortcutKey));
-            CustomMapShortcutKey = GetConfigurableKey(nameof(CustomMapShortcutKey));
-            PlayerGpsShortcutKey = GetConfigurableKey(nameof(PlayerGpsShortcutKey));
-            LogDebugSpawnerInfoShortcutKey = GetConfigurableKey(nameof(LogDebugSpawnerInfoShortcutKey));
+            InitData();
+            ShortcutKey = GetShortcutKey(nameof(ShortcutKey));
+            FastTravelShortcutKey = GetShortcutKey(nameof(FastTravelShortcutKey));
+            CustomMapShortcutKey = GetShortcutKey(nameof(CustomMapShortcutKey));
+            PlayerGpsShortcutKey = GetShortcutKey(nameof(PlayerGpsShortcutKey));
+            LogDebugSpawnerInfoShortcutKey = GetShortcutKey(nameof(LogDebugSpawnerInfoShortcutKey));
         }
 
         private IEnumerator LoadTexture(Action<Texture2D> action, string url)
@@ -1148,13 +1174,12 @@ namespace ModTeleporter
         private void ShowModTeleporterWindow()
         {
             ModTeleporterScreenId = GetHashCode();
-            string modTeleporterScreenTitle = $"{ModName} created by [Dragon Legion] Immaanuel#4300";
-
+            
             CurrentMapLocation = LastMapLocationTeleportedTo;
             NextMapLocationID = (int)LastMapLocationTeleportedTo + 1;
             NextMapLocation = MapLocations.GetValueOrDefault(NextMapLocationID);
 
-            ModTeleporterScreen = GUILayout.Window(ModTeleporterScreenId, ModTeleporterScreen, InitModTeleporterScreen, modTeleporterScreenTitle,
+            ModTeleporterScreen = GUILayout.Window(ModTeleporterScreenId, ModTeleporterScreen, InitModTeleporterScreen, ModTeleporterScreenTitle,
                                                                                                         GUI.skin.window,
                                                                                                         GUILayout.ExpandWidth(true),
                                                                                                         GUILayout.MinWidth(ModTeleporterScreenMinWidth),
@@ -1164,12 +1189,12 @@ namespace ModTeleporter
                                                                                                         GUILayout.MaxHeight(ModTeleporterScreenMaxHeight));
         }
 
-        private void ScreenMenuBox()
+        private void ModTeleporterScreenMenuBox()
         {
             string CollapseButtonText = IsModTeleporterScreenMinimized ? "O" : "-";
             if (GUI.Button(new Rect(ModTeleporterScreen.width - 40f, 0f, 20f, 20f), CollapseButtonText, GUI.skin.button))
             {
-                CollapseWindow();
+                CollapseModTeleporterWindow();
             }
 
             if (GUI.Button(new Rect(ModTeleporterScreen.width - 20f, 0f, 20f, 20f), "X", GUI.skin.button))
@@ -1178,16 +1203,16 @@ namespace ModTeleporter
             }
         }
 
-        private void CollapseWindow()
+        private void CollapseModTeleporterWindow()
         {
             if (!IsModTeleporterScreenMinimized)
             {
-                ModTeleporterScreen = new Rect(ModTeleporterScreenStartPositionX, ModTeleporterScreenStartPositionY, ModTeleporterScreenTotalWidth, ModTeleporterScreenMinHeight);
+                ModTeleporterScreen = new Rect(ModTeleporterScreen.x, ModTeleporterScreen.y, ModTeleporterScreenTotalWidth, ModTeleporterScreenMinHeight);
                 IsModTeleporterScreenMinimized = true;
             }
             else
             {
-                ModTeleporterScreen = new Rect(ModTeleporterScreenStartPositionX, ModTeleporterScreenStartPositionY, ModTeleporterScreenTotalWidth, ModTeleporterScreenTotalHeight);
+                ModTeleporterScreen = new Rect(ModTeleporterScreen.x, ModTeleporterScreen.y, ModTeleporterScreenTotalWidth, ModTeleporterScreenTotalHeight);
                 IsModTeleporterScreenMinimized = false;
             }
             ShowModTeleporterWindow();
@@ -1227,7 +1252,7 @@ namespace ModTeleporter
 
             using (new GUILayout.VerticalScope(GUI.skin.box))
             {
-                ScreenMenuBox();
+                ModTeleporterScreenMenuBox();
 
                 if (!IsModTeleporterScreenMinimized)
                 {

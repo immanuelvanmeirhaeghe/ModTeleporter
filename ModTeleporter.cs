@@ -1,5 +1,4 @@
-﻿using CJTools;
-using ModTeleporter.Data.Enums;
+﻿using ModTeleporter.Data.Enums;
 using ModTeleporter.Data.Interfaces;
 using ModTeleporter.Data.Modding;
 using ModTeleporter.Managers;
@@ -7,12 +6,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Xml;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.UI;
 
 namespace ModTeleporter
 {

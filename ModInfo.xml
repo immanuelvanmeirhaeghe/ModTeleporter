@@ -2,42 +2,42 @@
   <Compatible>U#21.2</Compatible>
   <Button Standard="NumPad6" ID="ShortcutKey">
     <Name>
-      <EN>ShortcutKey</EN>
+      <EN>Press shortcut key</EN>
     </Name>
     <Description>
-      <EN>Configurable ShortcutKey for mod screen.</EN>
+      <EN>to open the mod main screen.</EN>
     </Description>
   </Button>
   <Button Standard="D6" ID="FastTravelShortcutKey">
     <Name>
-      <EN>FastTravelShortcutKey</EN>
+      <EN>Press shortcut key</EN>
     </Name>
     <Description>
-      <EN>Configurable FastTravelShortcutKey for fast travel.</EN>
+      <EN>to fast travel to pre-selected destination.</EN>
     </Description>
   </Button>
   <Button Standard="M" ID="CustomMapShortcutKey">
     <Name>
-      <EN>CustomMapShortcutKey</EN>
+      <EN>Press shortcut key LeftAlt + </EN>
     </Name>
     <Description>
-      <EN>Configurable CustomMapShortcutKey to show map. Press LeftAlt +</EN>
+      <EN> to show map. </EN>
     </Description>
   </Button>
   <Button Standard="P" ID="PlayerGpsShortcutKey">
     <Name>
-      <EN>PlayerGpsShortcutKey</EN>
+      <EN>Press shortcut key LeftAlt + </EN>
     </Name>
     <Description>
-      <EN>Configurable PlayerGpsShortcutKey to show player GPS info. Press LeftAlt +</EN>
+      <EN>to show player GPS info.</EN>
     </Description>
   </Button>
   <Button Standard="L" ID="LogDebugSpawnerInfoShortcutKey">
     <Name>
-      <EN>LogDebugSpawnerInfoShortcutKey</EN>
+      <EN>Press shortcut key LeftAlt + </EN>
     </Name>
     <Description>
-      <EN>Configurable LogDebugSpawnerInfoShortcutKey to log DebugSpawner info. Press LeftAlt +</EN>
+      <EN>to log DebugSpawner info.</EN>
     </Description>
   </Button>
   <Name>

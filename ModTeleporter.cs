@@ -148,7 +148,7 @@ namespace ModTeleporter
             }
             else
             {
-                return KeyCode.Keypad8;
+                return KeyCode.Keypad7;
             }
         }
 

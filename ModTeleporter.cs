@@ -19,7 +19,7 @@ namespace ModTeleporter
     /// Press Alpha6 to fast travel.
     /// Press Left Alt + M to show the map.
     /// Press Left Alt + P to show player GPS info.
-    /// Press Left Alt + L  to log debug spawner info. to a file.
+    /// Press Left Alt + L  to log debug spawner info to a file.
     /// </summary>
     public class ModTeleporter : MonoBehaviour
     {
